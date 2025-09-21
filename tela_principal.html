@@ -170,17 +170,16 @@ function initBarcodeScanner() {
     
     isScanning = true;
     
-    // Configuração otimizada do QuaggaJS para máxima precisão
+    // Configuração simplificada e funcional do QuaggaJS
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#webcamVideo'),
             constraints: {
-                width: { min: 640, ideal: 1280, max: 1920 },
-                height: { min: 480, ideal: 720, max: 1080 },
-                facingMode: "environment",
-                frameRate: { ideal: 30, max: 60 }
+                width: 640,
+                height: 480,
+                facingMode: "environment"
             }
         },
         decoder: {
@@ -193,36 +192,13 @@ function initBarcodeScanner() {
                 "upc_reader",
                 "upc_e_reader",
                 "i2of5_reader"
-            ],
-            debug: {
-                drawBoundingBox: true,
-                showFrequency: true,
-                drawScanline: true,
-                showPatch: true
-            },
-            multiple: false // Detectar apenas um código por vez
+            ]
         },
         locate: true,
         locator: {
-            patchSize: "large", // Área maior para detecção
-            halfSample: false, // Usar resolução completa
-            showCanvas: true,
-            showPatches: true,
-            showFoundPatches: true,
-            showSkeleton: true,
-            showLabels: true,
-            showPatchLabels: true,
-            showBoundingBox: true,
-            boxFromPatches: {
-                showTransformed: true,
-                showTransformedBox: true,
-                showBB: true
-            }
-        },
-        numOfWorkers: 4, // Usar múltiplos workers para processamento
-        frequency: 10, // Verificar 10 vezes por segundo
-        debug: false,
-        locate: true
+            patchSize: "medium",
+            halfSample: true
+        }
     }, function(err) {
         if (err) {
             console.error('Erro ao inicializar scanner:', err);
@@ -234,40 +210,27 @@ function initBarcodeScanner() {
     // Mostrar indicador de qualidade
     mostrarIndicadorQualidade();
     
-    // Detectar código de barras com validação aprimorada
+    // Timeout de segurança para reinicializar scanner se travar
+    const scannerTimeout = setTimeout(() => {
+        console.log('Scanner travou, reinicializando...');
+        forcarReinicializacaoScanner();
+    }, 30000); // 30 segundos
+    
+    // Detectar código de barras (versão simplificada)
     Quagga.onDetected(function(result) {
         if (result && result.codeResult) {
             const code = result.codeResult.code;
-            const confidence = result.codeResult.decodedCodes[0].error;
+            console.log('Código detectado:', code);
             
-            console.log('Código detectado:', code, 'Confiança:', confidence);
+            // Limpar timeout
+            clearTimeout(scannerTimeout);
             
-            // Validar confiança mínima (quanto menor o erro, melhor)
-            if (confidence < 0.1) { // 90% de confiança
-                // Parar o scanner temporariamente
-                Quagga.stop();
-                isScanning = false;
-                
-                // Buscar usuário no banco de dados
-                buscarUsuario(code);
-            } else {
-                console.log('Código detectado mas com baixa confiança, continuando scan...');
-                atualizarIndicadorQualidade(`Baixa confiança: ${Math.round((1-confidence)*100)}%`);
-            }
-        }
-    });
-    
-    // Monitorar qualidade da detecção
-    Quagga.onProcessed(function(result) {
-        if (result) {
-            const drawingCtx = Quagga.canvas.ctx.overlay;
-            const drawingCanvas = Quagga.canvas.dom.overlay;
+            // Parar o scanner temporariamente
+            Quagga.stop();
+            isScanning = false;
             
-            if (result.codeResult) {
-                atualizarIndicadorQualidade('Código detectado!');
-            } else {
-                atualizarIndicadorQualidade('Aguardando código...');
-            }
+            // Buscar usuário no banco de dados
+            buscarUsuario(code);
         }
     });
 }
@@ -357,9 +320,35 @@ function redirecionarParaBemVindo(nomeCompleto) {
 function reiniciarScanner() {
     if (isScanning) return;
     
+    // Limpar scanner anterior
+    try {
+        Quagga.stop();
+    } catch (e) {
+        console.log('Scanner já estava parado');
+    }
+    
     setTimeout(() => {
         initBarcodeScanner();
     }, 1000);
+}
+
+// Função para forçar reinicialização do scanner
+function forcarReinicializacaoScanner() {
+    console.log('Forçando reinicialização do scanner...');
+    
+    // Parar scanner atual
+    try {
+        Quagga.stop();
+    } catch (e) {
+        console.log('Erro ao parar scanner:', e);
+    }
+    
+    isScanning = false;
+    
+    // Reiniciar após 2 segundos
+    setTimeout(() => {
+        initBarcodeScanner();
+    }, 2000);
 }
 
 // Função para limpar stream quando necessário
@@ -430,6 +419,13 @@ document.addEventListener('DOMContentLoaded', () => {
     cadastroBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">person_add</span>Cadastrar Usuário';
     cadastroBtn.onclick = () => window.location.href = 'tela_cadastro.html';
     buttonContainer.appendChild(cadastroBtn);
+    
+    // Adicionar botão de emergência para scanner
+    const scannerBtn = document.createElement('button');
+    scannerBtn.className = 'mt-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm';
+    scannerBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">qr_code_scanner</span>Reiniciar Scanner';
+    scannerBtn.onclick = forcarReinicializacaoScanner;
+    buttonContainer.appendChild(scannerBtn);
 });
 
 // Adicionar atalho de teclado Ctrl + . para abrir cadastro
