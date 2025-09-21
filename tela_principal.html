@@ -74,8 +74,13 @@
 <div class="absolute inset-0 border-2 border-secondary/50 rounded-xl pointer-events-none"></div>
 
 <!-- Indicador de qualidade -->
-<div id="qualityIndicator" class="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs hidden">
+<div id="qualityIndicator" class="absolute top-2 right-2 bg-black/70 text-white px-3 py-2 rounded-lg text-xs hidden">
+<div class="flex items-center gap-2">
 <span id="qualityText">Detectando...</span>
+<div id="progressBar" class="w-16 h-1 bg-gray-600 rounded-full overflow-hidden hidden">
+<div id="progressFill" class="h-full bg-green-400 transition-all duration-300" style="width: 0%"></div>
+</div>
+</div>
 </div>
 
 <div id="errorMessage" class="absolute inset-0 flex items-center justify-center bg-background-dark/80 rounded-xl hidden">
@@ -92,6 +97,9 @@
 <div class="mt-2 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
 <p class="text-xs text-green-300">⌨️ <strong>Atalho:</strong> Pressione <kbd class="px-1 py-0.5 bg-gray-700 rounded text-xs">Ctrl + .</kbd> para abrir a tela de cadastro</p>
 </div>
+<div class="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+<p class="text-xs text-yellow-300">📱 <strong>Dica de Escaneamento:</strong> Mantenha o código de barras estável na área central por 2-3 segundos para validação automática</p>
+</div>
 </div>
 </div>
 </body>
@@ -105,6 +113,8 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 let isScanning = false;
 let scanTimeout = null;
 let currentStream = null;
+let detections = []; // Array para armazenar detecções
+let lastDetectionTime = 0;
 
 // Função para inicializar a webcam
 async function initWebcam() {
@@ -122,12 +132,16 @@ async function initWebcam() {
     }
     
     try {
-        // Solicita acesso à webcam
+        // Solicita acesso à webcam com configurações de alta qualidade
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
-                width: { ideal: 640 },
-                height: { ideal: 480 },
-                facingMode: 'environment' // Câmera traseira para melhor escaneamento
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                facingMode: 'environment',
+                frameRate: { ideal: 60, max: 60 },
+                focusMode: 'continuous',
+                whiteBalanceMode: 'continuous',
+                exposureMode: 'continuous'
             } 
         });
         
@@ -170,16 +184,23 @@ function initBarcodeScanner() {
     
     isScanning = true;
     
-    // Configuração simplificada e funcional do QuaggaJS
+    // Configuração otimizada para máxima precisão
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#webcamVideo'),
             constraints: {
-                width: 640,
-                height: 480,
-                facingMode: "environment"
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                facingMode: "environment",
+                frameRate: { ideal: 60, max: 60 }
+            },
+            area: { // Usar área central otimizada
+                top: "15%",
+                right: "15%",
+                left: "15%",
+                bottom: "15%"
             }
         },
         decoder: {
@@ -192,13 +213,30 @@ function initBarcodeScanner() {
                 "upc_reader",
                 "upc_e_reader",
                 "i2of5_reader"
-            ]
+            ],
+            debug: {
+                drawBoundingBox: false,
+                showFrequency: false,
+                drawScanline: false,
+                showPatch: false
+            },
+            multiple: false
         },
         locate: true,
         locator: {
-            patchSize: "medium",
-            halfSample: true
-        }
+            patchSize: "large",
+            halfSample: false, // Usar resolução completa
+            showCanvas: false,
+            showPatches: false,
+            showFoundPatches: false,
+            showSkeleton: false,
+            showLabels: false,
+            showPatchLabels: false,
+            showBoundingBox: false
+        },
+        numOfWorkers: 2, // Usar 2 workers para processamento
+        frequency: 15, // Verificar 15 vezes por segundo
+        debug: false
     }, function(err) {
         if (err) {
             console.error('Erro ao inicializar scanner:', err);
@@ -216,21 +254,48 @@ function initBarcodeScanner() {
         forcarReinicializacaoScanner();
     }, 30000); // 30 segundos
     
-    // Detectar código de barras (versão simplificada)
+    // Detectar código de barras com validação inteligente
     Quagga.onDetected(function(result) {
         if (result && result.codeResult) {
             const code = result.codeResult.code;
-            console.log('Código detectado:', code);
+            const confidence = result.codeResult.decodedCodes[0].error;
+            const currentTime = Date.now();
             
-            // Limpar timeout
-            clearTimeout(scannerTimeout);
+            console.log('Código detectado:', code, 'Confiança:', confidence);
             
-            // Parar o scanner temporariamente
-            Quagga.stop();
-            isScanning = false;
+            // Adicionar detecção ao array
+            detections.push({
+                code: code,
+                confidence: confidence,
+                timestamp: currentTime
+            });
             
-            // Buscar usuário no banco de dados
-            buscarUsuario(code);
+            // Manter apenas detecções dos últimos 2 segundos
+            detections = detections.filter(d => currentTime - d.timestamp < 2000);
+            
+            // Verificar se temos detecções consistentes
+            const sameCodeDetections = detections.filter(d => d.code === code);
+            
+            if (sameCodeDetections.length >= 2) { // Pelo menos 2 detecções do mesmo código
+                console.log('Código validado com', sameCodeDetections.length, 'detecções');
+                
+                // Limpar timeout
+                clearTimeout(scannerTimeout);
+                
+                // Parar o scanner temporariamente
+                Quagga.stop();
+                isScanning = false;
+                
+                // Limpar array de detecções
+                detections = [];
+                
+                // Buscar usuário no banco de dados
+                buscarUsuario(code);
+            } else {
+                console.log('Aguardando mais detecções...', sameCodeDetections.length, '/2');
+                const progresso = (sameCodeDetections.length / 2) * 100;
+                atualizarIndicadorQualidade(`Validando... ${sameCodeDetections.length}/2`, progresso);
+            }
         }
     });
 }
@@ -376,10 +441,26 @@ function mostrarIndicadorQualidade() {
 }
 
 // Atualizar indicador de qualidade
-function atualizarIndicadorQualidade(texto) {
+function atualizarIndicadorQualidade(texto, progresso = null) {
     const qualityText = document.getElementById('qualityText');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    
     if (qualityText) {
         qualityText.textContent = texto;
+    }
+    
+    if (progresso !== null) {
+        if (progressBar) {
+            progressBar.classList.remove('hidden');
+        }
+        if (progressFill) {
+            progressFill.style.width = `${progresso}%`;
+        }
+    } else {
+        if (progressBar) {
+            progressBar.classList.add('hidden');
+        }
     }
 }
 
