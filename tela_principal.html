@@ -35,7 +35,7 @@
                 opacity: 1;
             }
             50% {
-                transform: translateY(288px);
+                transform: translateY(192px);
                 opacity: 1;
             }
             100% {
@@ -68,19 +68,14 @@
 </div>
 <h1 class="text-4xl font-bold mb-4 text-transparent gradient-text">Interface de Escaneamento Avançada</h1>
 <p class="text-lg text-text-muted mb-12">Aproxime seu dispositivo de identificação para acesso autorizadp ao hub de inovação.</p>
-<div class="relative w-72 h-72 mx-auto rounded-xl shadow-glow-primary animate-holographic-pulse border border-primary/30 overflow-hidden">
-<video id="webcamVideo" class="w-full h-full object-cover rounded-xl" autoplay muted playsinline></video>
+<div class="relative w-72 h-48 mx-auto shadow-glow-primary animate-holographic-pulse border border-primary/30 overflow-hidden">
+<video id="webcamVideo" class="w-full h-full object-cover" autoplay muted playsinline></video>
 <div class="absolute inset-0 pointer-events-none scan-line-overlay"></div>
-<div class="absolute inset-0 border-2 border-secondary/50 rounded-xl pointer-events-none"></div>
+<div class="absolute inset-0 border-2 border-secondary/50 pointer-events-none"></div>
 
 <!-- Indicador de qualidade -->
 <div id="qualityIndicator" class="absolute top-2 right-2 bg-black/70 text-white px-3 py-2 rounded-lg text-xs hidden">
-<div class="flex items-center gap-2">
 <span id="qualityText">Detectando...</span>
-<div id="progressBar" class="w-16 h-1 bg-gray-600 rounded-full overflow-hidden hidden">
-<div id="progressFill" class="h-full bg-green-400 transition-all duration-300" style="width: 0%"></div>
-</div>
-</div>
 </div>
 
 <div id="errorMessage" class="absolute inset-0 flex items-center justify-center bg-background-dark/80 rounded-xl hidden">
@@ -91,15 +86,6 @@
 </div>
 </div>
 <p class="text-sm text-text-muted mt-12">Problemas de acesso? Contate o suporte técnico holográfico.</p>
-<div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-<p class="text-xs text-blue-300">💡 <strong>Dica:</strong> Para evitar pedidos repetidos de permissão, clique no ícone de câmera na barra de endereços e selecione "Sempre permitir" para este site.</p>
-</div>
-<div class="mt-2 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-<p class="text-xs text-green-300">⌨️ <strong>Atalho:</strong> Pressione <kbd class="px-1 py-0.5 bg-gray-700 rounded text-xs">Ctrl + .</kbd> para abrir a tela de cadastro</p>
-</div>
-<div class="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-<p class="text-xs text-yellow-300">📱 <strong>Dica de Escaneamento:</strong> Mantenha o código de barras estável na área central por 2-3 segundos para validação automática</p>
-</div>
 </div>
 </div>
 </body>
@@ -113,8 +99,6 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 let isScanning = false;
 let scanTimeout = null;
 let currentStream = null;
-let detections = []; // Array para armazenar detecções
-let lastDetectionTime = 0;
 
 // Função para inicializar a webcam
 async function initWebcam() {
@@ -132,16 +116,12 @@ async function initWebcam() {
     }
     
     try {
-        // Solicita acesso à webcam com configurações de alta qualidade
+        // Solicita acesso à webcam
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
-                width: { ideal: 1920, max: 1920 },
-                height: { ideal: 1080, max: 1080 },
-                facingMode: 'environment',
-                frameRate: { ideal: 60, max: 60 },
-                focusMode: 'continuous',
-                whiteBalanceMode: 'continuous',
-                exposureMode: 'continuous'
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'environment'
             } 
         });
         
@@ -184,23 +164,16 @@ function initBarcodeScanner() {
     
     isScanning = true;
     
-    // Configuração otimizada para máxima precisão
+    // Configuração simplificada e estável
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#webcamVideo'),
             constraints: {
-                width: { ideal: 1920, max: 1920 },
-                height: { ideal: 1080, max: 1080 },
-                facingMode: "environment",
-                frameRate: { ideal: 60, max: 60 }
-            },
-            area: { // Usar área central otimizada
-                top: "15%",
-                right: "15%",
-                left: "15%",
-                bottom: "15%"
+                width: 640,
+                height: 480,
+                facingMode: "environment"
             }
         },
         decoder: {
@@ -213,30 +186,13 @@ function initBarcodeScanner() {
                 "upc_reader",
                 "upc_e_reader",
                 "i2of5_reader"
-            ],
-            debug: {
-                drawBoundingBox: false,
-                showFrequency: false,
-                drawScanline: false,
-                showPatch: false
-            },
-            multiple: false
+            ]
         },
         locate: true,
         locator: {
-            patchSize: "large",
-            halfSample: false, // Usar resolução completa
-            showCanvas: false,
-            showPatches: false,
-            showFoundPatches: false,
-            showSkeleton: false,
-            showLabels: false,
-            showPatchLabels: false,
-            showBoundingBox: false
-        },
-        numOfWorkers: 2, // Usar 2 workers para processamento
-        frequency: 15, // Verificar 15 vezes por segundo
-        debug: false
+            patchSize: "medium",
+            halfSample: true
+        }
     }, function(err) {
         if (err) {
             console.error('Erro ao inicializar scanner:', err);
@@ -254,48 +210,21 @@ function initBarcodeScanner() {
         forcarReinicializacaoScanner();
     }, 30000); // 30 segundos
     
-    // Detectar código de barras com validação inteligente
+    // Detectar código de barras (versão simples e funcional)
     Quagga.onDetected(function(result) {
         if (result && result.codeResult) {
             const code = result.codeResult.code;
-            const confidence = result.codeResult.decodedCodes[0].error;
-            const currentTime = Date.now();
+            console.log('Código detectado:', code);
             
-            console.log('Código detectado:', code, 'Confiança:', confidence);
+            // Limpar timeout
+            clearTimeout(scannerTimeout);
             
-            // Adicionar detecção ao array
-            detections.push({
-                code: code,
-                confidence: confidence,
-                timestamp: currentTime
-            });
+            // Parar o scanner temporariamente
+            Quagga.stop();
+            isScanning = false;
             
-            // Manter apenas detecções dos últimos 2 segundos
-            detections = detections.filter(d => currentTime - d.timestamp < 2000);
-            
-            // Verificar se temos detecções consistentes
-            const sameCodeDetections = detections.filter(d => d.code === code);
-            
-            if (sameCodeDetections.length >= 2) { // Pelo menos 2 detecções do mesmo código
-                console.log('Código validado com', sameCodeDetections.length, 'detecções');
-                
-                // Limpar timeout
-                clearTimeout(scannerTimeout);
-                
-                // Parar o scanner temporariamente
-                Quagga.stop();
-                isScanning = false;
-                
-                // Limpar array de detecções
-                detections = [];
-                
-                // Buscar usuário no banco de dados
-                buscarUsuario(code);
-            } else {
-                console.log('Aguardando mais detecções...', sameCodeDetections.length, '/2');
-                const progresso = (sameCodeDetections.length / 2) * 100;
-                atualizarIndicadorQualidade(`Validando... ${sameCodeDetections.length}/2`, progresso);
-            }
+            // Buscar usuário no banco de dados
+            buscarUsuario(code);
         }
     });
 }
@@ -441,26 +370,10 @@ function mostrarIndicadorQualidade() {
 }
 
 // Atualizar indicador de qualidade
-function atualizarIndicadorQualidade(texto, progresso = null) {
+function atualizarIndicadorQualidade(texto) {
     const qualityText = document.getElementById('qualityText');
-    const progressBar = document.getElementById('progressBar');
-    const progressFill = document.getElementById('progressFill');
-    
     if (qualityText) {
         qualityText.textContent = texto;
-    }
-    
-    if (progresso !== null) {
-        if (progressBar) {
-            progressBar.classList.remove('hidden');
-        }
-        if (progressFill) {
-            progressFill.style.width = `${progresso}%`;
-        }
-    } else {
-        if (progressBar) {
-            progressBar.classList.add('hidden');
-        }
     }
 }
 
@@ -484,38 +397,11 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-// Adicionar botão para reinicializar câmera se necessário
+// Inicializar quando a página carrega
 document.addEventListener('DOMContentLoaded', () => {
-    // Adicionar botão de reinicializar câmera
-    const buttonContainer = document.querySelector('.w-full.max-w-md.text-center');
-    const reiniciarBtn = document.createElement('button');
-    reiniciarBtn.className = 'mt-4 px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/80 transition-colors text-sm';
-    reiniciarBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">refresh</span>Reiniciar Câmera';
-    reiniciarBtn.onclick = reinicializarCamera;
-    buttonContainer.appendChild(reiniciarBtn);
-    
-    // Adicionar botão de cadastro
-    const cadastroBtn = document.createElement('button');
-    cadastroBtn.className = 'mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors text-sm';
-    cadastroBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">person_add</span>Cadastrar Usuário';
-    cadastroBtn.onclick = () => window.location.href = 'tela_cadastro.html';
-    buttonContainer.appendChild(cadastroBtn);
-    
-    // Adicionar botão de emergência para scanner
-    const scannerBtn = document.createElement('button');
-    scannerBtn.className = 'mt-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm';
-    scannerBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">qr_code_scanner</span>Reiniciar Scanner';
-    scannerBtn.onclick = forcarReinicializacaoScanner;
-    buttonContainer.appendChild(scannerBtn);
+    // Apenas inicializar a webcam
+    initWebcam();
 });
 
-// Adicionar atalho de teclado Ctrl + . para abrir cadastro
-document.addEventListener('keydown', (event) => {
-    // Verificar se Ctrl + . foi pressionado
-    if (event.ctrlKey && event.key === '.') {
-        event.preventDefault(); // Prevenir comportamento padrão
-        window.location.href = 'tela_cadastro.html';
-    }
-});
 </script>
 </html>
