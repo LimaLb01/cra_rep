@@ -73,16 +73,6 @@
 <div class="absolute inset-0 pointer-events-none scan-line-overlay"></div>
 <div class="absolute inset-0 border-2 border-secondary/50 rounded-xl pointer-events-none"></div>
 
-<!-- Área de detecção otimizada -->
-<div class="absolute inset-0 pointer-events-none">
-<div class="absolute top-1/4 left-1/4 right-1/4 bottom-1/4 border-2 border-primary/60 rounded-lg">
-<div class="absolute -top-1 -left-1 w-6 h-6 border-l-2 border-t-2 border-primary"></div>
-<div class="absolute -top-1 -right-1 w-6 h-6 border-r-2 border-t-2 border-primary"></div>
-<div class="absolute -bottom-1 -left-1 w-6 h-6 border-l-2 border-b-2 border-primary"></div>
-<div class="absolute -bottom-1 -right-1 w-6 h-6 border-r-2 border-b-2 border-primary"></div>
-</div>
-</div>
-
 <!-- Indicador de qualidade -->
 <div id="qualityIndicator" class="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs hidden">
 <span id="qualityText">Detectando...</span>
@@ -191,12 +181,6 @@ function initBarcodeScanner() {
                 height: { min: 480, ideal: 720, max: 1080 },
                 facingMode: "environment",
                 frameRate: { ideal: 30, max: 60 }
-            },
-            area: { // Área de detecção otimizada
-                top: "20%",
-                right: "10%",
-                left: "10%",
-                bottom: "20%"
             }
         },
         decoder: {
