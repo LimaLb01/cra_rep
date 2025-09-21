@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Welcome</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#39E079", "background-light": "#f6f8f7", "background-dark": "#122017"}, fontFamily: {display: "Inter"}, borderRadius: {DEFAULT: "0.5rem", lg: "1rem", xl: "1.5rem", full: "9999px"}}}};</script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="flex h-screen w-full flex-col items-center justify-center p-4">
+<div class="flex w-full max-w-md flex-col items-center justify-center text-center">
+<div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-primary/20">
+<span class="material-symbols-outlined text-primary" style="font-size: 48px; font-variation-settings: 'FILL' 1;">
+                    verified_user
+                </span>
+</div>
+<h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2" id="welcome-name">Bem-vindo!</h1>
+<p class="text-lg text-gray-600 dark:text-gray-300">Aproveite sua visita ao nosso hub de inovação. Estamos felizes em recebê-lo!</p>
+</div>
+</div>
+
+<script>
+// Carregar nome do usuário quando a página carrega
+document.addEventListener('DOMContentLoaded', () => {
+    const nomeUsuario = localStorage.getItem('usuarioNome');
+    const welcomeElement = document.getElementById('welcome-name');
+    
+    if (nomeUsuario) {
+        welcomeElement.textContent = `Bem-vindo, ${nomeUsuario}!`;
+    } else {
+        // Se não houver nome, redirecionar para tela principal
+        window.location.href = 'tela_principal.html';
+    }
+    
+    // Mostrar contador regressivo
+    let segundosRestantes = 5;
+    const contadorElement = document.createElement('div');
+    contadorElement.className = 'text-sm text-gray-500 dark:text-gray-400 mt-4';
+    contadorElement.textContent = `Redirecionando em ${segundosRestantes} segundos...`;
+    document.querySelector('.flex.w-full.max-w-md.flex-col').appendChild(contadorElement);
+    
+    // Atualizar contador a cada segundo
+    const intervalo = setInterval(() => {
+        segundosRestantes--;
+        contadorElement.textContent = `Redirecionando em ${segundosRestantes} segundos...`;
+        
+        if (segundosRestantes <= 0) {
+            clearInterval(intervalo);
+            // Limpar o nome do localStorage e redirecionar
+            localStorage.removeItem('usuarioNome');
+            window.location.href = 'tela_principal.html';
+        }
+    }, 1000);
+});
+</script>
+
+</body></html>

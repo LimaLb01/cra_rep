@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Welcome to the Innovation Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#39E079", secondary: "#7f00ff", "background-dark": "#122017", accent: "#ff00ff", "text-muted": "#8888a0", "text-light": "#e0e0ff", "background-light": "#f6f8f7"}, fontFamily: {display: "Inter"}, borderRadius: {DEFAULT: "0.5rem", lg: "1rem", xl: "1.5rem", full: "9999px"}, boxShadow: {"glow-primary": "0 0 15px #00f0ff, 0 0 25px #00f0ff, 0 0 35px #00f0ff", "glow-secondary": "0 0 15px #7f00ff, 0 0 25px #7f00ff, 0 0 35px #7f00ff"}, keyframes: {"scan-line": {"0%, 100%": {transform: "translateY(-150%)", opacity: "0"}, "50%": {transform: "translateY(0%)", opacity: "1"}, "80%": {opacity: "0.7"}, "90%": {opacity: "0.3"}}, "holographic-pulse": {"0%": {boxShadow: "0 0 10px #00f0ff, 0 0 20px #00f0ff, inset 0 0 10px #00f0ff"}, "50%": {boxShadow: "0 0 20px #7f00ff, 0 0 40px #7f00ff, inset 0 0 20px #7f00ff"}, "100%": {boxShadow: "0 0 10px #00f0ff, 0 0 20px #00f0ff, inset 0 0 10px #00f0ff"}}}, animation: {scan: "scan-line 3s ease-in-out infinite", "holographic-pulse": "holographic-pulse 3s infinite alternate"}}}};</script>
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 48
+        }
+        .gradient-text {
+            background-image: linear-gradient(90deg, #00f0ff, #7f00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        @keyframes scanLine {
+            0% {
+                transform: translateY(0px);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(288px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0px);
+                opacity: 1;
+            }
+        }
+        
+        .scan-line-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #39E079;
+            box-shadow: 0 0 10px #39E079, 0 0 20px #39E079;
+            animation: scanLine 2s linear infinite;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-text-light font-display">
+<div class="flex flex-col items-center justify-center min-h-screen p-4">
+<div class="w-full max-w-md text-center">
+<div class="mb-8">
+<span class="material-symbols-outlined text-primary" style="font-size: 100px;">
+                qr_code_scanner
+            </span>
+</div>
+<h1 class="text-4xl font-bold mb-4 text-transparent gradient-text">Interface de Escaneamento Avançada</h1>
+<p class="text-lg text-text-muted mb-12">Aproxime seu dispositivo de identificação para acesso autorizadp ao hub de inovação.</p>
+<div class="relative w-72 h-72 mx-auto rounded-xl shadow-glow-primary animate-holographic-pulse border border-primary/30 overflow-hidden">
+<video id="webcamVideo" class="w-full h-full object-cover rounded-xl" autoplay muted playsinline></video>
+<div class="absolute inset-0 pointer-events-none scan-line-overlay"></div>
+<div class="absolute inset-0 border-2 border-secondary/50 rounded-xl pointer-events-none"></div>
+<div id="errorMessage" class="absolute inset-0 flex items-center justify-center bg-background-dark/80 rounded-xl hidden">
+<div class="text-center p-4">
+<span class="material-symbols-outlined text-red-400 mb-2" style="font-size: 48px;">videocam_off</span>
+<p class="text-red-400 text-sm">Webcam não disponível</p>
+</div>
+</div>
+</div>
+<p class="text-sm text-text-muted mt-12">Problemas de acesso? Contate o suporte técnico holográfico.</p>
+<div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+<p class="text-xs text-blue-300">💡 <strong>Dica:</strong> Para evitar pedidos repetidos de permissão, clique no ícone de câmera na barra de endereços e selecione "Sempre permitir" para este site.</p>
+</div>
+</div>
+</div>
+</body>
+<script>
+// Configuração do Supabase
+const supabaseUrl = 'https://cretuodvidcfqwgpnauz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXR1b2R2aWRjZnF3Z3BuYXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTA5MDIsImV4cCI6MjA3Mzk4NjkwMn0.6WxPs27ox3DAOC2HiW0QTQl4AXxNNlNsWjKlB0NdVQY';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// Variáveis globais
+let isScanning = false;
+let scanTimeout = null;
+let currentStream = null;
+
+// Função para inicializar a webcam
+async function initWebcam() {
+    const video = document.getElementById('webcamVideo');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    // Se já temos um stream ativo, reutilizar
+    if (currentStream && currentStream.active) {
+        video.srcObject = currentStream;
+        video.play();
+        setTimeout(() => {
+            initBarcodeScanner();
+        }, 500);
+        return;
+    }
+    
+    try {
+        // Solicita acesso à webcam
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'environment' // Câmera traseira para melhor escaneamento
+            } 
+        });
+        
+        // Salvar stream globalmente
+        currentStream = stream;
+        
+        // Conecta o stream ao elemento video
+        video.srcObject = stream;
+        
+        // Garante que o vídeo seja reproduzido
+        video.onloadedmetadata = () => {
+            video.play();
+            // Iniciar scanner após a webcam estar pronta
+            setTimeout(() => {
+                initBarcodeScanner();
+            }, 1000);
+        };
+        
+    } catch (error) {
+        console.error('Erro ao acessar a webcam:', error);
+        
+        // Exibe mensagem de erro
+        errorMessage.classList.remove('hidden');
+        video.style.display = 'none';
+        
+        // Diferentes tipos de erro
+        if (error.name === 'NotAllowedError') {
+            errorMessage.querySelector('p').textContent = 'Acesso à webcam negado - Clique em "Permitir" para continuar';
+        } else if (error.name === 'NotFoundError') {
+            errorMessage.querySelector('p').textContent = 'Webcam não encontrada';
+        } else {
+            errorMessage.querySelector('p').textContent = 'Erro ao acessar webcam';
+        }
+    }
+}
+
+// Inicializar scanner de código de barras
+function initBarcodeScanner() {
+    if (isScanning) return;
+    
+    isScanning = true;
+    
+    // Configuração do QuaggaJS
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#webcamVideo'),
+            constraints: {
+                width: 640,
+                height: 480,
+                facingMode: "environment"
+            }
+        },
+        decoder: {
+            readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "code_39_reader",
+                "code_39_vin_reader",
+                "codabar_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "i2of5_reader"
+            ]
+        },
+        locate: true,
+        locator: {
+            patchSize: "medium",
+            halfSample: true
+        }
+    }, function(err) {
+        if (err) {
+            console.error('Erro ao inicializar scanner:', err);
+            return;
+        }
+        Quagga.start();
+    });
+
+    // Detectar código de barras
+    Quagga.onDetected(function(result) {
+        if (result && result.codeResult) {
+            const code = result.codeResult.code;
+            console.log('Código detectado:', code);
+            
+            // Parar o scanner temporariamente
+            Quagga.stop();
+            isScanning = false;
+            
+            // Buscar usuário no banco de dados
+            buscarUsuario(code);
+        }
+    });
+}
+
+// Buscar usuário por código de barras
+async function buscarUsuario(codigoBarras) {
+    try {
+        // Mostrar feedback visual
+        mostrarFeedback('Verificando acesso...', 'info');
+        
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('nome_completo, empresa')
+            .eq('codigo_barras', codigoBarras)
+            .single();
+        
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // Usuário não encontrado
+                mostrarFeedback('Acesso negado - Usuário não cadastrado', 'error');
+                setTimeout(() => {
+                    reiniciarScanner();
+                }, 3000);
+            } else {
+                throw error;
+            }
+        } else {
+            // Usuário encontrado - redirecionar
+            mostrarFeedback('Acesso autorizado!', 'success');
+            setTimeout(() => {
+                redirecionarParaBemVindo(data.nome_completo);
+            }, 1500);
+        }
+        
+    } catch (error) {
+        console.error('Erro ao buscar usuário:', error);
+        mostrarFeedback('Erro ao verificar acesso', 'error');
+        setTimeout(() => {
+            reiniciarScanner();
+        }, 3000);
+    }
+}
+
+// Mostrar feedback visual
+function mostrarFeedback(mensagem, tipo) {
+    // Remover feedback anterior se existir
+    const feedbackExistente = document.getElementById('feedback-message');
+    if (feedbackExistente) {
+        feedbackExistente.remove();
+    }
+    
+    const feedback = document.createElement('div');
+    feedback.id = 'feedback-message';
+    feedback.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg text-white font-semibold z-50 ${
+        tipo === 'success' ? 'bg-green-500' : 
+        tipo === 'error' ? 'bg-red-500' : 
+        'bg-blue-500'
+    }`;
+    feedback.textContent = mensagem;
+    
+    document.body.appendChild(feedback);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        if (feedback.parentNode) {
+            feedback.remove();
+        }
+    }, 3000);
+}
+
+// Redirecionar para tela de boas-vindas
+function redirecionarParaBemVindo(nomeCompleto) {
+    // Extrair primeiro nome
+    const primeiroNome = nomeCompleto.split(' ')[0];
+    
+    // Salvar nome no localStorage para a próxima tela
+    localStorage.setItem('usuarioNome', primeiroNome);
+    
+    // Redirecionar
+    window.location.href = 'tela_depois_cracha.html';
+}
+
+// Reiniciar scanner
+function reiniciarScanner() {
+    if (isScanning) return;
+    
+    setTimeout(() => {
+        initBarcodeScanner();
+    }, 1000);
+}
+
+// Função para limpar stream quando necessário
+function limparStream() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+    }
+}
+
+// Função para reinicializar câmera se necessário
+function reinicializarCamera() {
+    limparStream();
+    setTimeout(() => {
+        initWebcam();
+    }, 500);
+}
+
+// Inicializa a webcam quando a página carrega
+document.addEventListener('DOMContentLoaded', initWebcam);
+
+// Limpa o stream quando a página é fechada
+window.addEventListener('beforeunload', () => {
+    limparStream();
+    
+    if (isScanning) {
+        Quagga.stop();
+    }
+});
+
+// Adicionar botão para reinicializar câmera se necessário
+document.addEventListener('DOMContentLoaded', () => {
+    // Adicionar botão de reinicializar câmera
+    const buttonContainer = document.querySelector('.w-full.max-w-md.text-center');
+    const reiniciarBtn = document.createElement('button');
+    reiniciarBtn.className = 'mt-4 px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/80 transition-colors text-sm';
+    reiniciarBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">refresh</span>Reiniciar Câmera';
+    reiniciarBtn.onclick = reinicializarCamera;
+    buttonContainer.appendChild(reiniciarBtn);
+});
+</script>
+</html>

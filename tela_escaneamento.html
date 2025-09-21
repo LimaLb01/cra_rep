@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Interface de Escaneamento Avançada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#19a1e6",
+                        "background-dark": "#0a0a0a",
+                        "foreground-dark": "#f6f7f8",
+                        "scanner-green": "#00ff88",
+                        "scanner-cyan": "#00ffff",
+                        "scanner-purple": "#8b5cf6"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    animation: {
+                        'scan-line': 'scanLine 2s linear infinite',
+                        'pulse-glow': 'pulseGlow 1.5s ease-in-out infinite alternate'
+                    },
+                    keyframes: {
+                        scanLine: {
+                            '0%': { transform: 'translateY(0px)' },
+                            '100%': { transform: 'translateY(100%)' }
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 20px rgba(0, 255, 136, 0.3)' },
+                            '100%': { boxShadow: '0 0 40px rgba(0, 255, 136, 0.8)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+        
+        .scanner-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scan-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 4px;
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88;
+            z-index: 20;
+            animation: scanLine 2s linear infinite;
+        }
+        
+        .scanner-border {
+            border: 3px solid;
+            border-image: linear-gradient(45deg, #00ff88, #00ffff, #8b5cf6, #00ff88) 1;
+            animation: pulseGlow 1.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes scanLine {
+            0% { 
+                transform: translateY(0px);
+                opacity: 1;
+            }
+            50% { 
+                transform: translateY(50%);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(100%);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background-dark font-display text-foreground-dark min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="text-center py-8">
+        <div class="inline-flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-scanner-green text-6xl">qr_code_scanner</span>
+        </div>
+        <h1 class="text-4xl font-bold tracking-tight">
+            <span class="text-primary">Interface de</span><br>
+            <span class="text-scanner-cyan">Escaneamento</span> 
+            <span class="text-scanner-purple">Avançada</span>
+        </h1>
+        <p class="mt-4 text-foreground-dark/70 text-lg">
+            Aproxime seu dispositivo de identificação para acesso autorizado ao hub de inovação.
+        </p>
+    </div>
+
+    <!-- Scanner Area -->
+    <div class="flex-1 flex items-center justify-center px-4">
+        <div class="scanner-container scanner-border rounded-2xl w-full max-w-lg aspect-[4/3] relative">
+            <!-- Camera Feed -->
+            <video 
+                id="camera" 
+                autoplay 
+                muted 
+                playsinline 
+                class="w-full h-full object-cover rounded-xl"
+            ></video>
+            
+            <!-- Scan Line -->
+            <div class="scan-line"></div>
+            
+            <!-- Corner Indicators -->
+            <div class="absolute top-4 left-4 w-8 h-8 border-l-4 border-t-4 border-scanner-green"></div>
+            <div class="absolute top-4 right-4 w-8 h-8 border-r-4 border-t-4 border-scanner-green"></div>
+            <div class="absolute bottom-4 left-4 w-8 h-8 border-l-4 border-b-4 border-scanner-green"></div>
+            <div class="absolute bottom-4 right-4 w-8 h-8 border-r-4 border-b-4 border-scanner-green"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center py-6">
+        <p class="text-foreground-dark/50 text-sm">
+            Problemas de acesso? Contate o suporte técnico holográfico
+        </p>
+    </div>
+
+    <script>
+        // Inicializar câmera
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    } 
+                });
+                const video = document.getElementById('camera');
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Erro ao acessar a câmera:', err);
+                // Fallback para imagem de placeholder se a câmera não funcionar
+                const video = document.getElementById('camera');
+                video.style.background = 'linear-gradient(45deg, #1a1a1a, #2a2a2a)';
+                video.innerHTML = '<div class="flex items-center justify-center h-full text-foreground-dark/50"><span class="material-symbols-outlined text-6xl">camera_alt</span></div>';
+            }
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', initCamera);
+    </script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Innovate Hub - Visitor Registration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#19a1e6",
+            "background-light": "#f6f7f8",
+            "background-dark": "#111c21",
+            "foreground-light": "#0e171b",
+            "foreground-dark": "#f6f7f8",
+            "subtle-light": "#e7eff3",
+            "subtle-dark": "#1f2e35",
+            "border-light": "#d0dfe7",
+            "border-dark": "#2d424d",
+            "placeholder-light": "#4e7f97",
+            "placeholder-dark": "#7b98a8"
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "1rem",
+            "xl": "1.5rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-foreground-light dark:text-foreground-dark">
+<div class="flex flex-col min-h-screen">
+<main class="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8">
+<div class="w-full max-w-md mx-auto">
+<div class="text-center mb-8">
+<div class="inline-flex items-center justify-center bg-primary/10 dark:bg-primary/20 p-3 rounded-full mb-4">
+<span class="material-symbols-outlined text-primary text-4xl">hub</span>
+</div>
+<h1 class="text-3xl font-bold tracking-tight text-foreground-light dark:text-foreground-dark">Bem-vindo ao Innovate Hub</h1>
+<p class="mt-2 text-foreground-light/70 dark:text-foreground-dark/70">Registre-se para receber um crachá temporário.</p>
+</div>
+<form class="space-y-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div>
+<label class="block text-sm font-medium text-foreground-light dark:text-foreground-dark mb-2" for="first-name">Nome</label>
+<input class="form-input w-full bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark rounded-lg p-3 placeholder:text-placeholder-light dark:placeholder:text-placeholder-dark focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out" id="first-name" name="first-name" placeholder="Seu nome" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-foreground-light dark:text-foreground-dark mb-2" for="last-name">Sobrenome</label>
+<input class="form-input w-full bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark rounded-lg p-3 placeholder:text-placeholder-light dark:placeholder:text-placeholder-dark focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out" id="last-name" name="last-name" placeholder="Seu sobrenome" type="text"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-foreground-light dark:text-foreground-dark mb-2" for="company">Empresa</label>
+<input class="form-input w-full bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark rounded-lg p-3 placeholder:text-placeholder-light dark:placeholder:text-placeholder-dark focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out" id="company" name="company" placeholder="Nome da sua empresa" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-foreground-light dark:text-foreground-dark mb-2" for="badge-number">Número do Crachá</label>
+<div class="relative">
+<input class="form-input w-full bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark rounded-lg p-3 pr-12 placeholder:text-placeholder-light dark:placeholder:text-placeholder-dark focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out" id="badge-number" name="badge-number" placeholder="Ex: 001, 002, 003..." type="text"/>
+<button type="button" id="scan-badge-btn" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 transition-colors duration-200">
+<span class="material-symbols-outlined text-xl">qr_code_scanner</span>
+</button>
+</div>
+</div>
+<div>
+<button class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background-light dark:focus:ring-offset-background-dark transition-colors duration-200" type="submit">
+<span class="material-symbols-outlined text-xl">badge</span>
+              Gerar Crachá Temporário
+            </button>
+</div>
+</form>
+</div>
+</main>
+</div>
+
+<!-- Modal de Escaneamento -->
+<div id="scan-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+<div class="bg-background-light dark:bg-background-dark rounded-xl p-6 w-full max-w-md mx-4">
+<div class="text-center mb-4">
+<h3 class="text-xl font-bold text-foreground-light dark:text-foreground-dark">Escanear Código de Barras</h3>
+<p class="text-sm text-foreground-light/70 dark:text-foreground-dark/70 mt-1">Aponte a câmera para o código de barras do crachá</p>
+</div>
+<div class="relative w-full aspect-square bg-black rounded-lg overflow-hidden mb-4">
+<video id="scanner-video" class="w-full h-full object-cover" autoplay muted playsinline></video>
+<div class="absolute inset-0 border-2 border-primary/50 rounded-lg"></div>
+<div class="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-primary"></div>
+<div class="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-primary"></div>
+<div class="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-primary"></div>
+<div class="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-primary"></div>
+</div>
+<div class="flex gap-3">
+<button id="close-scan-btn" class="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+Cancelar
+</button>
+<button id="manual-input-btn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+Inserir Manualmente
+</button>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Configuração do Supabase
+const supabaseUrl = 'https://cretuodvidcfqwgpnauz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXR1b2R2aWRjZnF3Z3BuYXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTA5MDIsImV4cCI6MjA3Mzk4NjkwMn0.6WxPs27ox3DAOC2HiW0QTQl4AXxNNlNsWjKlB0NdVQY';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// Variáveis globais
+let scannerStream = null;
+let isScanning = false;
+
+// Elementos DOM
+const scanModal = document.getElementById('scan-modal');
+const scanBtn = document.getElementById('scan-badge-btn');
+const closeScanBtn = document.getElementById('close-scan-btn');
+const manualInputBtn = document.getElementById('manual-input-btn');
+const badgeInput = document.getElementById('badge-number');
+const scannerVideo = document.getElementById('scanner-video');
+
+// Abrir modal de escaneamento
+scanBtn.addEventListener('click', () => {
+    scanModal.classList.remove('hidden');
+    startScanner();
+});
+
+// Fechar modal
+closeScanBtn.addEventListener('click', () => {
+    closeScanner();
+    scanModal.classList.add('hidden');
+});
+
+// Inserir manualmente
+manualInputBtn.addEventListener('click', () => {
+    closeScanner();
+    scanModal.classList.add('hidden');
+    badgeInput.focus();
+});
+
+// Iniciar escaneamento
+async function startScanner() {
+    try {
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'environment' // Câmera traseira para melhor escaneamento
+            }
+        });
+        
+        scannerVideo.srcObject = scannerStream;
+        scannerVideo.onloadedmetadata = () => {
+            scannerVideo.play();
+            initBarcodeScanner();
+        };
+        
+    } catch (error) {
+        console.error('Erro ao acessar câmera:', error);
+        alert('Erro ao acessar a câmera. Verifique as permissões.');
+    }
+}
+
+// Inicializar scanner de código de barras
+function initBarcodeScanner() {
+    if (isScanning) return;
+    
+    isScanning = true;
+    
+    // Configuração do QuaggaJS
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: scannerVideo,
+            constraints: {
+                width: 640,
+                height: 480,
+                facingMode: "environment"
+            }
+        },
+        decoder: {
+            readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "code_39_reader",
+                "code_39_vin_reader",
+                "codabar_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "i2of5_reader"
+            ]
+        },
+        locate: true,
+        locator: {
+            patchSize: "medium",
+            halfSample: true
+        }
+    }, function(err) {
+        if (err) {
+            console.error('Erro ao inicializar scanner:', err);
+            return;
+        }
+        Quagga.start();
+    });
+
+    // Detectar código de barras
+    Quagga.onDetected(function(result) {
+        if (result && result.codeResult) {
+            const code = result.codeResult.code;
+            console.log('Código detectado:', code);
+            
+            // Preencher o campo automaticamente
+            badgeInput.value = code;
+            
+            // Parar o scanner e fechar o modal
+            Quagga.stop();
+            closeScanner();
+            scanModal.classList.add('hidden');
+            
+            // Mostrar confirmação
+            badgeInput.style.borderColor = '#10b981';
+            setTimeout(() => {
+                badgeInput.style.borderColor = '';
+            }, 2000);
+        }
+    });
+}
+
+// Fechar scanner
+function closeScanner() {
+    if (scannerStream) {
+        scannerStream.getTracks().forEach(track => track.stop());
+        scannerStream = null;
+    }
+    
+    if (isScanning) {
+        Quagga.stop();
+        isScanning = false;
+    }
+}
+
+// Função para salvar dados no Supabase
+async function salvarUsuario() {
+    const form = document.querySelector('form');
+    const formData = new FormData(form);
+    
+    // Coletar dados do formulário
+    const dadosUsuario = {
+        nome_completo: `${formData.get('first-name')} ${formData.get('last-name')}`,
+        empresa: formData.get('company'),
+        codigo_barras: formData.get('badge-number')
+    };
+    
+    // Validação básica
+    if (!dadosUsuario.nome_completo.trim() || !dadosUsuario.empresa || !dadosUsuario.codigo_barras) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+    }
+    
+    try {
+        // Mostrar loading
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Salvando...';
+        submitBtn.disabled = true;
+        
+        // Inserir no Supabase
+        const { data, error } = await supabase
+            .from('usuarios')
+            .insert([dadosUsuario])
+            .select();
+        
+        if (error) {
+            throw error;
+        }
+        
+        // Sucesso
+        alert('Usuário cadastrado com sucesso!');
+        form.reset();
+        
+        // Feedback visual
+        submitBtn.innerHTML = '<span class="material-symbols-outlined">check</span> Cadastrado!';
+        submitBtn.classList.remove('bg-primary', 'hover:bg-primary/90');
+        submitBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            submitBtn.classList.add('bg-primary', 'hover:bg-primary/90');
+            submitBtn.disabled = false;
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Erro ao salvar usuário:', error);
+        
+        // Verificar se é erro de código de barras duplicado
+        if (error.code === '23505') {
+            alert('Este código de barras já está cadastrado. Por favor, use outro código.');
+        } else {
+            alert('Erro ao cadastrar usuário. Tente novamente.');
+        }
+        
+        // Restaurar botão
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// Adicionar evento ao formulário
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        salvarUsuario();
+    });
+});
+
+// Limpar recursos quando a página for fechada
+window.addEventListener('beforeunload', () => {
+    closeScanner();
+});
+</script>
+
+</body></html>
