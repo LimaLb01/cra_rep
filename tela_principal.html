@@ -72,6 +72,22 @@
 <video id="webcamVideo" class="w-full h-full object-cover rounded-xl" autoplay muted playsinline></video>
 <div class="absolute inset-0 pointer-events-none scan-line-overlay"></div>
 <div class="absolute inset-0 border-2 border-secondary/50 rounded-xl pointer-events-none"></div>
+
+<!-- Área de detecção otimizada -->
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute top-1/4 left-1/4 right-1/4 bottom-1/4 border-2 border-primary/60 rounded-lg">
+<div class="absolute -top-1 -left-1 w-6 h-6 border-l-2 border-t-2 border-primary"></div>
+<div class="absolute -top-1 -right-1 w-6 h-6 border-r-2 border-t-2 border-primary"></div>
+<div class="absolute -bottom-1 -left-1 w-6 h-6 border-l-2 border-b-2 border-primary"></div>
+<div class="absolute -bottom-1 -right-1 w-6 h-6 border-r-2 border-b-2 border-primary"></div>
+</div>
+</div>
+
+<!-- Indicador de qualidade -->
+<div id="qualityIndicator" class="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs hidden">
+<span id="qualityText">Detectando...</span>
+</div>
+
 <div id="errorMessage" class="absolute inset-0 flex items-center justify-center bg-background-dark/80 rounded-xl hidden">
 <div class="text-center p-4">
 <span class="material-symbols-outlined text-red-400 mb-2" style="font-size: 48px;">videocam_off</span>
@@ -164,16 +180,23 @@ function initBarcodeScanner() {
     
     isScanning = true;
     
-    // Configuração do QuaggaJS
+    // Configuração otimizada do QuaggaJS para máxima precisão
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#webcamVideo'),
             constraints: {
-                width: 640,
-                height: 480,
-                facingMode: "environment"
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 },
+                facingMode: "environment",
+                frameRate: { ideal: 30, max: 60 }
+            },
+            area: { // Área de detecção otimizada
+                top: "20%",
+                right: "10%",
+                left: "10%",
+                bottom: "20%"
             }
         },
         decoder: {
@@ -182,18 +205,40 @@ function initBarcodeScanner() {
                 "ean_reader",
                 "ean_8_reader",
                 "code_39_reader",
-                "code_39_vin_reader",
                 "codabar_reader",
                 "upc_reader",
                 "upc_e_reader",
                 "i2of5_reader"
-            ]
+            ],
+            debug: {
+                drawBoundingBox: true,
+                showFrequency: true,
+                drawScanline: true,
+                showPatch: true
+            },
+            multiple: false // Detectar apenas um código por vez
         },
         locate: true,
         locator: {
-            patchSize: "medium",
-            halfSample: true
-        }
+            patchSize: "large", // Área maior para detecção
+            halfSample: false, // Usar resolução completa
+            showCanvas: true,
+            showPatches: true,
+            showFoundPatches: true,
+            showSkeleton: true,
+            showLabels: true,
+            showPatchLabels: true,
+            showBoundingBox: true,
+            boxFromPatches: {
+                showTransformed: true,
+                showTransformedBox: true,
+                showBB: true
+            }
+        },
+        numOfWorkers: 4, // Usar múltiplos workers para processamento
+        frequency: 10, // Verificar 10 vezes por segundo
+        debug: false,
+        locate: true
     }, function(err) {
         if (err) {
             console.error('Erro ao inicializar scanner:', err);
@@ -202,18 +247,43 @@ function initBarcodeScanner() {
         Quagga.start();
     });
 
-    // Detectar código de barras
+    // Mostrar indicador de qualidade
+    mostrarIndicadorQualidade();
+    
+    // Detectar código de barras com validação aprimorada
     Quagga.onDetected(function(result) {
         if (result && result.codeResult) {
             const code = result.codeResult.code;
-            console.log('Código detectado:', code);
+            const confidence = result.codeResult.decodedCodes[0].error;
             
-            // Parar o scanner temporariamente
-            Quagga.stop();
-            isScanning = false;
+            console.log('Código detectado:', code, 'Confiança:', confidence);
             
-            // Buscar usuário no banco de dados
-            buscarUsuario(code);
+            // Validar confiança mínima (quanto menor o erro, melhor)
+            if (confidence < 0.1) { // 90% de confiança
+                // Parar o scanner temporariamente
+                Quagga.stop();
+                isScanning = false;
+                
+                // Buscar usuário no banco de dados
+                buscarUsuario(code);
+            } else {
+                console.log('Código detectado mas com baixa confiança, continuando scan...');
+                atualizarIndicadorQualidade(`Baixa confiança: ${Math.round((1-confidence)*100)}%`);
+            }
+        }
+    });
+    
+    // Monitorar qualidade da detecção
+    Quagga.onProcessed(function(result) {
+        if (result) {
+            const drawingCtx = Quagga.canvas.ctx.overlay;
+            const drawingCanvas = Quagga.canvas.dom.overlay;
+            
+            if (result.codeResult) {
+                atualizarIndicadorQualidade('Código detectado!');
+            } else {
+                atualizarIndicadorQualidade('Aguardando código...');
+            }
         }
     });
 }
@@ -221,6 +291,9 @@ function initBarcodeScanner() {
 // Buscar usuário por código de barras
 async function buscarUsuario(codigoBarras) {
     try {
+        // Ocultar indicador de qualidade
+        ocultarIndicadorQualidade();
+        
         // Mostrar feedback visual
         mostrarFeedback('Verificando acesso...', 'info');
         
@@ -319,6 +392,30 @@ function reinicializarCamera() {
     setTimeout(() => {
         initWebcam();
     }, 500);
+}
+
+// Mostrar indicador de qualidade
+function mostrarIndicadorQualidade() {
+    const indicator = document.getElementById('qualityIndicator');
+    if (indicator) {
+        indicator.classList.remove('hidden');
+    }
+}
+
+// Atualizar indicador de qualidade
+function atualizarIndicadorQualidade(texto) {
+    const qualityText = document.getElementById('qualityText');
+    if (qualityText) {
+        qualityText.textContent = texto;
+    }
+}
+
+// Ocultar indicador de qualidade
+function ocultarIndicadorQualidade() {
+    const indicator = document.getElementById('qualityIndicator');
+    if (indicator) {
+        indicator.classList.add('hidden');
+    }
 }
 
 // Inicializa a webcam quando a página carrega
