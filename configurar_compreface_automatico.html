@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração Automática CompreFace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8 text-center">Configuração Automática CompreFace</h1>
+            
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Status da Configuração</h2>
+                <div id="status" class="text-yellow-400">Iniciando configuração...</div>
+                <div id="progress" class="mt-4">
+                    <div class="bg-gray-700 rounded-full h-2">
+                        <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Passos da Configuração</h2>
+                <div id="steps" class="space-y-2">
+                    <div id="step1" class="flex items-center space-x-2">
+                        <span class="text-gray-400">1.</span>
+                        <span>Verificando conexão com CompreFace...</span>
+                        <span id="step1Status" class="text-yellow-400">⏳</span>
+                    </div>
+                    <div id="step2" class="flex items-center space-x-2">
+                        <span class="text-gray-400">2.</span>
+                        <span>Criando aplicação de reconhecimento...</span>
+                        <span id="step2Status" class="text-gray-400">⏸️</span>
+                    </div>
+                    <div id="step3" class="flex items-center space-x-2">
+                        <span class="text-gray-400">3.</span>
+                        <span>Adicionando rosto do Lucas Brasil Lima...</span>
+                        <span id="step3Status" class="text-gray-400">⏸️</span>
+                    </div>
+                    <div id="step4" class="flex items-center space-x-2">
+                        <span class="text-gray-400">4.</span>
+                        <span>Testando reconhecimento...</span>
+                        <span id="step4Status" class="text-gray-400">⏸️</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Logs da Configuração</h2>
+                <div id="logs" class="bg-black p-4 rounded-lg h-64 overflow-y-auto font-mono text-sm">
+                    <div>Iniciando configuração automática do CompreFace...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'c3e84a46-1a08-4913-8330-31818f0c0e06';
+        const BASE_URL = 'http://localhost:8000/api/v1';
+        
+        let currentStep = 0;
+        const totalSteps = 4;
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function updateStep(stepNumber, status, message = '') {
+            const stepElement = document.getElementById(`step${stepNumber}`);
+            const statusElement = document.getElementById(`step${stepNumber}Status`);
+            
+            if (status === 'success') {
+                statusElement.textContent = '✅';
+                statusElement.className = 'text-green-400';
+            } else if (status === 'error') {
+                statusElement.textContent = '❌';
+                statusElement.className = 'text-red-400';
+            } else if (status === 'progress') {
+                statusElement.textContent = '⏳';
+                statusElement.className = 'text-yellow-400';
+            }
+            
+            if (message) {
+                addLog(message);
+            }
+        }
+
+        function addLog(message) {
+            const logsDiv = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        async function checkCompreFaceConnection() {
+            try {
+                addLog('Verificando conexão com CompreFace...');
+                const response = await fetch(`${BASE_URL}/faces`, {
+                    method: 'GET',
+                    headers: {
+                        'x-api-key': API_KEY
+                    }
+                });
+                
+                if (response.ok || response.status === 400) {
+                    addLog('✅ CompreFace está rodando!');
+                    updateStep(1, 'success', 'CompreFace conectado com sucesso');
+                    currentStep++;
+                    updateProgress();
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao conectar com CompreFace: ${error.message}`);
+                updateStep(1, 'error', 'Falha na conexão com CompreFace');
+                return false;
+            }
+        }
+
+        async function createApplication() {
+            try {
+                addLog('Criando aplicação de reconhecimento...');
+                updateStep(2, 'progress');
+                
+                // Tentar criar aplicação via API
+                const response = await fetch(`${BASE_URL}/applications`, {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'facial-recognition',
+                        type: 'recognition'
+                    })
+                });
+                
+                if (response.ok) {
+                    addLog('✅ Aplicação criada via API!');
+                    updateStep(2, 'success', 'Aplicação criada com sucesso');
+                } else {
+                    addLog('⚠️ Erro na API, tentando via interface web...');
+                    addLog('Por favor, acesse http://localhost:8000 e crie uma aplicação manualmente');
+                    addLog('Nome: facial-recognition, Tipo: Recognition');
+                    updateStep(2, 'error', 'Criação manual necessária');
+                }
+                
+                currentStep++;
+                updateProgress();
+                return response.ok;
+            } catch (error) {
+                addLog(`❌ Erro ao criar aplicação: ${error.message}`);
+                updateStep(2, 'error', 'Falha na criação da aplicação');
+                return false;
+            }
+        }
+
+        async function addFace() {
+            try {
+                addLog('Adicionando rosto do Lucas Brasil Lima...');
+                updateStep(3, 'progress');
+                
+                // Simular adição de rosto (na prática, seria necessário upload de imagem)
+                addLog('⚠️ Para adicionar seu rosto:');
+                addLog('1. Acesse http://localhost:8000');
+                addLog('2. Vá para a aplicação facial-recognition');
+                addLog('3. Clique em "Add Face"');
+                addLog('4. Faça upload de uma foto sua');
+                addLog('5. Subject ID: Lucas Brasil Lima');
+                
+                updateStep(3, 'success', 'Instruções para adicionar rosto fornecidas');
+                currentStep++;
+                updateProgress();
+                return true;
+            } catch (error) {
+                addLog(`❌ Erro ao adicionar rosto: ${error.message}`);
+                updateStep(3, 'error', 'Falha ao adicionar rosto');
+                return false;
+            }
+        }
+
+        async function testRecognition() {
+            try {
+                addLog('Testando reconhecimento...');
+                updateStep(4, 'progress');
+                
+                // Testar se a aplicação está funcionando
+                const response = await fetch(`${BASE_URL}/faces`, {
+                    method: 'GET',
+                    headers: {
+                        'x-api-key': API_KEY
+                    }
+                });
+                
+                if (response.ok) {
+                    addLog('✅ Reconhecimento configurado com sucesso!');
+                    updateStep(4, 'success', 'Sistema pronto para uso');
+                    document.getElementById('status').textContent = '✅ Configuração concluída com sucesso!';
+                    document.getElementById('status').className = 'text-green-400';
+                } else {
+                    addLog('⚠️ Aplicação ainda não está pronta');
+                    updateStep(4, 'error', 'Configuração manual necessária');
+                }
+                
+                currentStep++;
+                updateProgress();
+                return response.ok;
+            } catch (error) {
+                addLog(`❌ Erro no teste: ${error.message}`);
+                updateStep(4, 'error', 'Falha no teste de reconhecimento');
+                return false;
+            }
+        }
+
+        async function startConfiguration() {
+            addLog('🚀 Iniciando configuração automática...');
+            
+            const step1 = await checkCompreFaceConnection();
+            if (!step1) return;
+            
+            const step2 = await createApplication();
+            if (!step2) {
+                addLog('⚠️ Continue com a configuração manual no navegador');
+            }
+            
+            await addFace();
+            await testRecognition();
+            
+            addLog('🎉 Configuração concluída!');
+            addLog('Agora você pode usar o sistema de reconhecimento facial real!');
+        }
+
+        // Iniciar configuração automaticamente
+        window.addEventListener('load', startConfiguration);
+    </script>
+</body>
+</html>

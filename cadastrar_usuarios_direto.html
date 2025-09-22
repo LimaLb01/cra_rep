@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Usuários - CompreFace Direto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold mb-4">🎭 Cadastrar Usuários - CompreFace</h1>
+                <p class="text-gray-400">Cadastre usuários no sistema de reconhecimento facial</p>
+            </div>
+
+            <!-- Status da Conexão -->
+            <div id="connectionStatus" class="mb-6 p-4 rounded-lg bg-gray-800">
+                <div class="flex items-center">
+                    <span class="material-icons mr-2">sync</span>
+                    <span>Verificando conexão com CompreFace...</span>
+                </div>
+            </div>
+
+            <!-- Instruções -->
+            <div class="bg-blue-800 rounded-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <span class="material-icons mr-2">info</span>
+                    Instruções de Cadastro
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex items-start">
+                        <span class="material-icons mr-2 text-yellow-400">1</span>
+                        <div>
+                            <strong>Passo 1:</strong> Acesse a interface do CompreFace: 
+                            <a href="http://localhost:8000" target="_blank" class="text-blue-300 hover:text-blue-200 underline">
+                                http://localhost:8000
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="material-icons mr-2 text-yellow-400">2</span>
+                        <div>
+                            <strong>Passo 2:</strong> Faça login com sua conta de administrador
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="material-icons mr-2 text-yellow-400">3</span>
+                        <div>
+                            <strong>Passo 3:</strong> Vá para "Face Collection" no menu lateral
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="material-icons mr-2 text-yellow-400">4</span>
+                        <div>
+                            <strong>Passo 4:</strong> Clique em "Add" para adicionar uma nova face
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="material-icons mr-2 text-yellow-400">5</span>
+                        <div>
+                            <strong>Passo 5:</strong> Use o ID do usuário como "Subject" (ex: joao_silva_001)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulário de Cadastro -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Cadastrar Novo Usuário -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <span class="material-icons mr-2">person_add</span>
+                        Dados do Usuário
+                    </h2>
+                    
+                    <form id="cadastroForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Nome Completo (Subject)</label>
+                            <input type="text" id="subjectId" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Ex: João Silva" required>
+                            <p class="text-xs text-gray-400 mt-1">Use o NOME COMPLETO no CompreFace como "Subject"</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Nome Completo</label>
+                            <input type="text" id="nomeCompleto" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="João Silva" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Matrícula</label>
+                            <input type="text" id="matricula" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="12345" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Empresa</label>
+                            <input type="text" id="empresa" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="RandonCorp" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Cargo</label>
+                            <input type="text" id="cargo" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Desenvolvedor" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Foto do Rosto</label>
+                            <input type="file" id="fotoRosto" accept="image/*" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   required>
+                        </div>
+                        
+                        <button type="button" onclick="gerarDados()" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            <span class="material-icons mr-2">auto_fix_high</span>
+                            Gerar Dados de Exemplo
+                        </button>
+                        
+                        <button type="button" onclick="abrirCompreFace()" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            <span class="material-icons mr-2">open_in_new</span>
+                            Abrir CompreFace
+                        </button>
+                        
+                        <button type="button" onclick="salvarNoSupabase()" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            <span class="material-icons mr-2">save</span>
+                            Salvar no Supabase
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Dados para CompreFace -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <span class="material-icons mr-2">content_copy</span>
+                        Dados para CompreFace
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Subject ID (Copie para CompreFace)</label>
+                            <div class="flex">
+                                <input type="text" id="subjectIdCopy" readonly
+                                       class="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                                <button onclick="copiarSubjectId()" 
+                                        class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg">
+                                    <span class="material-icons">content_copy</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Preview da Imagem</label>
+                            <div id="imagePreview" class="bg-gray-700 rounded-lg p-4 text-center">
+                                <span class="text-gray-400">Selecione uma imagem</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-800 rounded-lg p-4">
+                            <h3 class="font-bold mb-2">📋 Instruções:</h3>
+                            <ol class="text-sm space-y-1">
+                                <li>1. Preencha os dados do usuário</li>
+                                <li>2. Clique em "Salvar no Supabase"</li>
+                                <li>3. Clique em "Abrir CompreFace"</li>
+                                <li>4. Vá para "Face Collection"</li>
+                                <li>5. Clique em "Add Subject"</li>
+                                <li>6. Cole o Nome Completo como Subject</li>
+                                <li>7. Faça upload da imagem</li>
+                                <li>8. Clique em "Save"</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div class="mt-8 bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <span class="material-icons mr-2">terminal</span>
+                    Logs do Sistema
+                </h3>
+                <div id="logs" class="bg-black rounded-lg p-4 h-48 overflow-y-auto font-mono text-sm">
+                    <div class="text-green-400">Sistema iniciado...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CompreFaceUserManager {
+            constructor() {
+                this.apiKey = 'c3e84a46-1a08-4913-8330-31818f0c0e06';
+                this.baseUrl = 'http://localhost:8000/api/v1';
+                this.init();
+            }
+
+            init() {
+                this.log('🎭 Inicializando sistema de cadastro...');
+                this.checkConnection();
+                this.setupEventListeners();
+                this.checkSupabase();
+            }
+
+            checkSupabase() {
+                // Verificar se Supabase está carregado
+                if (typeof window.supabase !== 'undefined') {
+                    this.log('✅ Supabase carregado com sucesso!', 'success');
+                } else {
+                    this.log('⏳ Aguardando carregamento do Supabase...', 'warning');
+                    // Tentar novamente após 2 segundos
+                    setTimeout(() => {
+                        if (typeof window.supabase !== 'undefined') {
+                            this.log('✅ Supabase carregado com sucesso!', 'success');
+                        } else {
+                            this.log('❌ Erro ao carregar Supabase. Recarregue a página.', 'error');
+                        }
+                    }, 2000);
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('fotoRosto').addEventListener('change', (e) => {
+                    this.previewImage(e.target.files[0]);
+                });
+            }
+
+            async checkConnection() {
+                try {
+                    this.log('🔍 Verificando conexão com CompreFace...');
+                    
+                    // Tentar acessar a interface web
+                    const response = await fetch('http://localhost:8000/', {
+                        method: 'GET',
+                        mode: 'no-cors'
+                    });
+                    
+                    this.log('✅ CompreFace está rodando!', 'success');
+                    this.updateConnectionStatus('success', '✅ CompreFace está rodando');
+                    
+                } catch (error) {
+                    this.log(`❌ Erro de conexão: ${error.message}`, 'error');
+                    this.updateConnectionStatus('error', '❌ Erro de conexão com CompreFace');
+                }
+            }
+
+            updateConnectionStatus(type, message) {
+                const status = document.getElementById('connectionStatus');
+                const icon = status.querySelector('.material-icons');
+                const text = status.querySelector('span:last-child');
+                
+                status.className = `mb-6 p-4 rounded-lg ${type === 'success' ? 'bg-green-800' : 'bg-red-800'}`;
+                icon.textContent = type === 'success' ? 'check_circle' : 'error';
+                text.textContent = message;
+            }
+
+            log(message, type = 'info') {
+                const logs = document.getElementById('logs');
+                const timestamp = new Date().toLocaleTimeString();
+                const color = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : type === 'warning' ? 'text-yellow-400' : 'text-gray-400';
+                logs.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+                logs.scrollTop = logs.scrollHeight;
+            }
+
+            previewImage(file) {
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = `<img src="${e.target.result}" class="max-w-xs mx-auto rounded-lg" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            gerarDados() {
+                const nomes = ['João Silva', 'Maria Santos', 'Pedro Oliveira', 'Ana Costa', 'Carlos Lima'];
+                const cargos = ['Desenvolvedor', 'Analista', 'Designer', 'Gerente', 'Técnico'];
+                
+                const dados = {
+                    subjectId: nomes[Math.floor(Math.random() * nomes.length)],
+                    nomeCompleto: nomes[Math.floor(Math.random() * nomes.length)],
+                    matricula: Math.floor(Math.random() * 90000) + 10000,
+                    empresa: 'RandonCorp',
+                    cargo: cargos[Math.floor(Math.random() * cargos.length)]
+                };
+                
+                // Garantir que subjectId e nomeCompleto sejam iguais
+                dados.subjectId = dados.nomeCompleto;
+                
+                document.getElementById('subjectId').value = dados.subjectId;
+                document.getElementById('nomeCompleto').value = dados.nomeCompleto;
+                document.getElementById('matricula').value = dados.matricula;
+                document.getElementById('empresa').value = dados.empresa;
+                document.getElementById('cargo').value = dados.cargo;
+                
+                document.getElementById('subjectIdCopy').value = dados.subjectId;
+                
+                this.log(`📝 Dados gerados: ${dados.subjectId}`, 'success');
+            }
+
+            abrirCompreFace() {
+                const subjectId = document.getElementById('subjectId').value;
+                if (!subjectId) {
+                    alert('Preencha o ID do usuário primeiro!');
+                    return;
+                }
+                
+                // Abrir CompreFace em nova aba
+                window.open('http://localhost:8000', '_blank');
+                
+                this.log(`🔗 Abrindo CompreFace para: ${subjectId}`, 'info');
+            }
+
+            copiarSubjectId() {
+                const subjectId = document.getElementById('subjectIdCopy');
+                subjectId.select();
+                document.execCommand('copy');
+                
+                this.log('📋 Subject ID copiado!', 'success');
+            }
+
+            async salvarNoSupabase() {
+                const formData = {
+                    subjectId: document.getElementById('subjectId').value,
+                    nomeCompleto: document.getElementById('nomeCompleto').value,
+                    matricula: document.getElementById('matricula').value,
+                    empresa: document.getElementById('empresa').value,
+                    cargo: document.getElementById('cargo').value
+                };
+
+                if (!formData.nomeCompleto || !formData.matricula) {
+                    alert('Preencha pelo menos o nome completo e matrícula!');
+                    return;
+                }
+
+                try {
+                    this.log(`💾 Salvando usuário no Supabase: ${formData.nomeCompleto}`);
+                    
+                    // Verificar se Supabase está carregado
+                    if (typeof window.supabase === 'undefined') {
+                        throw new Error('Supabase não está carregado. Aguarde alguns segundos e tente novamente.');
+                    }
+                    
+                    // Configuração do Supabase
+                    const supabaseUrl = 'https://cretuodvidcfqwgpnauz.supabase.co';
+                    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXR1b2R2aWRjZnF3Z3BuYXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTA5MDIsImV4cCI6MjA3Mzk4NjkwMn0.6WxPs27ox3DAOC2HiW0QTQl4AXxNNlNsWjKlB0NdVQY';
+                    
+                    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    
+                    // Inserir diretamente na tabela (RLS desabilitado temporariamente)
+                    const { data, error } = await supabase
+                        .from('usuarios_faciais')
+                        .insert([{
+                            nome_completo: formData.nomeCompleto,
+                            matricula: formData.matricula,
+                            empresa: formData.empresa,
+                            cargo: formData.cargo,
+                            face_id: formData.nomeCompleto,
+                            ativo: true
+                        }]);
+
+                    if (error) {
+                        throw new Error(`Erro no Supabase: ${error.message}`);
+                    }
+
+                    this.log(`✅ Usuário ${formData.nomeCompleto} salvo no Supabase!`, 'success');
+                    alert(`✅ Usuário ${formData.nomeCompleto} cadastrado com sucesso no Supabase!`);
+                    
+                } catch (error) {
+                    this.log(`❌ Erro ao salvar no Supabase: ${error.message}`, 'error');
+                    alert(`❌ Erro ao salvar: ${error.message}`);
+                }
+            }
+        }
+
+        // Instanciar o gerenciador
+        const userManager = new CompreFaceUserManager();
+
+        // Funções globais
+        function gerarDados() {
+            userManager.gerarDados();
+        }
+
+        function abrirCompreFace() {
+            userManager.abrirCompreFace();
+        }
+
+        function copiarSubjectId() {
+            userManager.copiarSubjectId();
+        }
+
+        function salvarNoSupabase() {
+            userManager.salvarNoSupabase();
+        }
+    </script>
+</body>
+</html>

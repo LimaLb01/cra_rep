@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerar API Key CompreFace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8 text-center">🔑 Gerar API Key CompreFace</h1>
+            
+            <!-- Status -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Status da Configuração</h2>
+                <div id="status" class="text-yellow-400">Verificando CompreFace...</div>
+            </div>
+
+            <!-- Passos -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Passos para Gerar API Key</h2>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</span>
+                        <div>
+                            <p class="font-semibold">Acesse o CompreFace</p>
+                            <p class="text-gray-400">Abra <a href="http://localhost:8000" target="_blank" class="text-blue-400 hover:underline">http://localhost:8000</a> no navegador</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</span>
+                        <div>
+                            <p class="font-semibold">Crie uma Aplicação</p>
+                            <p class="text-gray-400">Clique em "Create Application" → Nome: "facial-recognition" → Tipo: "Recognition"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</span>
+                        <div>
+                            <p class="font-semibold">Gere a API Key</p>
+                            <p class="text-gray-400">Na aplicação criada, clique em "API Keys" → "Generate New Key"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</span>
+                        <div>
+                            <p class="font-semibold">Cole a API Key Aqui</p>
+                            <div class="mt-2">
+                                <input type="text" id="newApiKey" placeholder="Cole a nova API Key aqui" 
+                                       class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                                <button onclick="testNewApiKey()" class="mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                    Testar Nova API Key
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teste da API Key -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Teste da API Key</h2>
+                <div id="testResults" class="space-y-2">
+                    <div class="text-gray-400">Aguardando teste...</div>
+                </div>
+            </div>
+
+            <!-- Atualizar Configuração -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Atualizar Configuração</h2>
+                <div id="updateConfig" class="hidden">
+                    <p class="text-green-400 mb-4">✅ API Key válida! Clique no botão abaixo para atualizar a configuração:</p>
+                    <button onclick="updateConfigFile()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                        🔄 Atualizar config.js
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let validApiKey = null;
+
+        async function testNewApiKey() {
+            const apiKey = document.getElementById('newApiKey').value.trim();
+            const testResults = document.getElementById('testResults');
+            
+            if (!apiKey) {
+                testResults.innerHTML = '<div class="text-red-400">❌ Por favor, cole uma API Key</div>';
+                return;
+            }
+
+            testResults.innerHTML = '<div class="text-yellow-400">⏳ Testando API Key...</div>';
+
+            try {
+                // Testar endpoint de status
+                const statusResponse = await fetch('http://localhost:8000/api/v1/status', {
+                    method: 'GET',
+                    headers: { 'x-api-key': apiKey }
+                });
+
+                if (statusResponse.ok) {
+                    testResults.innerHTML = '<div class="text-green-400">✅ API Key válida! CompreFace funcionando.</div>';
+                    validApiKey = apiKey;
+                    document.getElementById('updateConfig').classList.remove('hidden');
+                } else {
+                    testResults.innerHTML = `<div class="text-red-400">❌ Erro: ${statusResponse.status} - ${statusResponse.statusText}</div>`;
+                }
+            } catch (error) {
+                testResults.innerHTML = `<div class="text-red-400">❌ Erro de conexão: ${error.message}</div>`;
+            }
+        }
+
+        function updateConfigFile() {
+            if (!validApiKey) {
+                alert('Nenhuma API Key válida encontrada!');
+                return;
+            }
+
+            // Criar novo conteúdo do config.js
+            const newConfig = `// Configuração do Sistema de Reconhecimento Facial
+// ⚠️ IMPORTANTE: Em produção, use variáveis de ambiente ou backend
+
+const CONFIG = {
+    // Supabase Configuration
+    supabase: {
+        url: 'https://cretuodvidcfqwgpnauz.supabase.co',
+        // ⚠️ Em produção, use chave anônima com permissões mínimas
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXR1b2R2aWRjZnF3Z3BuYXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTA5MDIsImV4cCI6MjA3Mzk4NjkwMn0.6WxPs27ox3DAOC2HiW0QTQl4AXxNNlNsWjKlB0NdVQY',
+        tables: {
+            usuarios: 'usuarios_faciais',
+            logs: 'logs_acesso',
+            config: 'config_sistema',
+            metricas: 'metricas_sistema'
+        }
+    },
+    
+    // CompreFace Configuration
+    compreface: {
+        // ⚠️ Em produção, use HTTPS e domínio real
+        baseUrl: window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://seu-dominio.com',
+        apiKey: '${validApiKey}',
+        endpoints: {
+            faces: '/api/v1/faces',
+            recognize: '/api/v1/recognition/recognize',
+            applications: '/api/v1/applications'
+        }
+    },
+    
+    // System Configuration
+    system: {
+        detectionInterval: 150, // ms
+        personDetectionTimeout: 5000, // ms
+        faceDetectionTimeout: 10000, // ms
+        inactivityTimeout: 30000, // ms
+        maxRetries: 3
+    },
+    
+    // UI Configuration
+    ui: {
+        showDebugInfo: false, // Em produção, sempre false
+        enableSimulation: true, // Fallback quando CompreFace não disponível
+        showLoadingStates: true
+    }
+};
+
+// Exportar para uso global
+window.CONFIG = CONFIG;`;
+
+            // Criar arquivo para download
+            const blob = new Blob([newConfig], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'config.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('✅ Arquivo config.js atualizado! Substitua o arquivo atual pelo download.');
+        }
+
+        // Verificar status inicial
+        window.addEventListener('load', async () => {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/status', {
+                    method: 'GET',
+                    headers: { 'x-api-key': 'c3e84a46-1a08-4913-8330-31818f0c0e06' }
+                });
+                
+                if (response.ok) {
+                    statusDiv.textContent = '✅ CompreFace está rodando!';
+                    statusDiv.className = 'text-green-400';
+                } else {
+                    statusDiv.textContent = '⚠️ CompreFace rodando, mas API key inválida';
+                    statusDiv.className = 'text-yellow-400';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ CompreFace não está acessível';
+                statusDiv.className = 'text-red-400';
+            }
+        });
+    </script>
+</body>
+</html>

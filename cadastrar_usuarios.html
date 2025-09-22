@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Usuários - CompreFace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold mb-4">🎭 Cadastrar Usuários - CompreFace</h1>
+                <p class="text-gray-400">Cadastre usuários no sistema de reconhecimento facial</p>
+            </div>
+
+            <!-- Status da Conexão -->
+            <div id="connectionStatus" class="mb-6 p-4 rounded-lg bg-gray-800">
+                <div class="flex items-center">
+                    <span class="material-icons mr-2">sync</span>
+                    <span>Verificando conexão com CompreFace...</span>
+                </div>
+            </div>
+
+            <!-- Formulário de Cadastro -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Cadastrar Novo Usuário -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <span class="material-icons mr-2">person_add</span>
+                        Cadastrar Usuário
+                    </h2>
+                    
+                    <form id="cadastroForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">ID do Usuário</label>
+                            <input type="text" id="subjectId" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Ex: joao_silva_001" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Nome Completo</label>
+                            <input type="text" id="nomeCompleto" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="João Silva" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Matrícula</label>
+                            <input type="text" id="matricula" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="12345" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Empresa</label>
+                            <input type="text" id="empresa" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="RandonCorp" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Cargo</label>
+                            <input type="text" id="cargo" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Desenvolvedor" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Foto do Rosto</label>
+                            <input type="file" id="fotoRosto" accept="image/*" 
+                                   class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                   required>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            <span class="material-icons mr-2">save</span>
+                            Cadastrar Usuário
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lista de Usuários -->
+                <div class="bg-gray-800 rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <span class="material-icons mr-2">people</span>
+                        Usuários Cadastrados
+                    </h2>
+                    
+                    <div class="mb-4">
+                        <button id="listarUsuarios" 
+                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            <span class="material-icons mr-2">refresh</span>
+                            Atualizar Lista
+                        </button>
+                    </div>
+                    
+                    <div id="listaUsuarios" class="space-y-2 max-h-96 overflow-y-auto">
+                        <p class="text-gray-400 text-center py-4">Clique em "Atualizar Lista" para carregar usuários</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview da Imagem -->
+            <div id="imagePreview" class="mt-6 hidden">
+                <h3 class="text-xl font-bold mb-4">Preview da Imagem</h3>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <img id="previewImg" class="max-w-xs mx-auto rounded-lg" alt="Preview">
+                </div>
+            </div>
+
+            <!-- Logs -->
+            <div class="mt-8 bg-gray-800 rounded-lg p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <span class="material-icons mr-2">terminal</span>
+                    Logs do Sistema
+                </h3>
+                <div id="logs" class="bg-black rounded-lg p-4 h-48 overflow-y-auto font-mono text-sm">
+                    <div class="text-green-400">Sistema iniciado...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CompreFaceUserManager {
+            constructor() {
+                this.apiKey = 'c3e84a46-1a08-4913-8330-31818f0c0e06';
+                this.baseUrl = 'http://localhost:8000/api/v1'; // URL local do CompreFace
+                this.init();
+            }
+
+            init() {
+                this.log('🎭 Inicializando CompreFace User Manager...');
+                this.checkConnection();
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                document.getElementById('cadastroForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.cadastrarUsuario();
+                });
+
+                document.getElementById('listarUsuarios').addEventListener('click', () => {
+                    this.listarUsuarios();
+                });
+
+                document.getElementById('fotoRosto').addEventListener('change', (e) => {
+                    this.previewImage(e.target.files[0]);
+                });
+            }
+
+            async checkConnection() {
+                try {
+                    // CompreFace usa endpoint específico para verificar status
+                    const response = await fetch(`${this.baseUrl}/status`, {
+                        method: 'GET',
+                        headers: {
+                            'x-api-key': this.apiKey
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        this.updateConnectionStatus('success', '✅ Conectado ao CompreFace');
+                        this.log('✅ Conexão com CompreFace estabelecida');
+                    } else {
+                        // Se /status não funcionar, tentar /faces
+                        const facesResponse = await fetch(`${this.baseUrl}/faces`, {
+                            method: 'GET',
+                            headers: {
+                                'x-api-key': this.apiKey
+                            }
+                        });
+                        
+                        if (facesResponse.ok || facesResponse.status === 400) {
+                            this.updateConnectionStatus('success', '✅ Conectado ao CompreFace');
+                            this.log('✅ Conexão com CompreFace estabelecida');
+                        } else {
+                            throw new Error(`HTTP ${facesResponse.status}: ${facesResponse.statusText}`);
+                        }
+                    }
+                } catch (error) {
+                    this.updateConnectionStatus('error', '❌ Erro de conexão com CompreFace');
+                    this.log(`❌ Erro de conexão: ${error.message}`);
+                }
+            }
+
+            updateConnectionStatus(type, message) {
+                const status = document.getElementById('connectionStatus');
+                const icon = status.querySelector('.material-icons');
+                const text = status.querySelector('span:last-child');
+                
+                status.className = `mb-6 p-4 rounded-lg ${type === 'success' ? 'bg-green-800' : 'bg-red-800'}`;
+                icon.textContent = type === 'success' ? 'check_circle' : 'error';
+                text.textContent = message;
+            }
+
+            async cadastrarUsuario() {
+                const formData = {
+                    subjectId: document.getElementById('subjectId').value,
+                    nomeCompleto: document.getElementById('nomeCompleto').value,
+                    matricula: document.getElementById('matricula').value,
+                    empresa: document.getElementById('empresa').value,
+                    cargo: document.getElementById('cargo').value,
+                    foto: document.getElementById('fotoRosto').files[0]
+                };
+
+                if (!formData.foto) {
+                    this.log('❌ Selecione uma foto');
+                    return;
+                }
+
+                try {
+                    this.log(`📸 Cadastrando usuário: ${formData.subjectId}`);
+                    
+                    // Converter imagem para base64
+                    const base64Data = await this.imageToBase64(formData.foto);
+                    
+                    // Cadastrar no CompreFace - usar endpoint correto
+                    const response = await fetch(`${this.baseUrl}/faces`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': this.apiKey
+                        },
+                        body: JSON.stringify({
+                            file: base64Data,
+                            subject: formData.subjectId
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro ao cadastrar: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    this.log(`✅ Usuário ${formData.subjectId} cadastrado com sucesso!`);
+                    
+                    // Cadastrar no Supabase
+                    await this.cadastrarNoSupabase(formData);
+                    
+                    // Limpar formulário
+                    document.getElementById('cadastroForm').reset();
+                    document.getElementById('imagePreview').classList.add('hidden');
+                    
+                } catch (error) {
+                    this.log(`❌ Erro ao cadastrar: ${error.message}`);
+                }
+            }
+
+            async cadastrarNoSupabase(dados) {
+                try {
+                    const supabaseUrl = 'https://cretuodvidcfqwgpnauz.supabase.co';
+                    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNyZXR1b2R2aWRjZnF3Z3BuYXV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTA5MDIsImV4cCI6MjA3Mzk4NjkwMn0.6WxPs27ox3DAOC2HiW0QTQl4AXxNNlNsWjKlB0NdVQY';
+                    
+                    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                    
+                    const { data, error } = await supabase
+                        .from('usuarios_faciais')
+                        .insert([{
+                            nome_completo: dados.nomeCompleto,
+                            matricula: dados.matricula,
+                            empresa: dados.empresa,
+                            cargo: dados.cargo,
+                            face_id: dados.subjectId,
+                            ativo: true
+                        }]);
+
+                    if (error) {
+                        throw new Error(`Erro no Supabase: ${error.message}`);
+                    }
+
+                    this.log(`✅ Usuário ${dados.subjectId} cadastrado no Supabase!`);
+                    
+                } catch (error) {
+                    this.log(`❌ Erro ao cadastrar no Supabase: ${error.message}`);
+                }
+            }
+
+            async listarUsuarios() {
+                try {
+                    this.log('📋 Listando usuários...');
+                    
+                    const response = await fetch(`${this.baseUrl}/faces`, {
+                        method: 'GET',
+                        headers: {
+                            'x-api-key': this.apiKey
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro ao listar: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    this.displayUsuarios(result);
+                    this.log(`✅ ${result.length} usuários encontrados`);
+                    
+                } catch (error) {
+                    this.log(`❌ Erro ao listar usuários: ${error.message}`);
+                }
+            }
+
+            displayUsuarios(usuarios) {
+                const lista = document.getElementById('listaUsuarios');
+                
+                if (usuarios.length === 0) {
+                    lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum usuário cadastrado</p>';
+                    return;
+                }
+
+                lista.innerHTML = usuarios.map(usuario => `
+                    <div class="bg-gray-700 rounded-lg p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold">${usuario.subject}</div>
+                            <div class="text-sm text-gray-400">ID: ${usuario.id}</div>
+                        </div>
+                        <button onclick="userManager.deletarUsuario('${usuario.subject}')" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                            <span class="material-icons text-sm">delete</span>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            async deletarUsuario(subjectId) {
+                if (!confirm(`Tem certeza que deseja deletar o usuário ${subjectId}?`)) {
+                    return;
+                }
+
+                try {
+                    this.log(`🗑️ Deletando usuário: ${subjectId}`);
+                    
+                    const response = await fetch(`${this.baseUrl}/faces/${subjectId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'x-api-key': this.apiKey
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro ao deletar: ${response.status}`);
+                    }
+
+                    this.log(`✅ Usuário ${subjectId} deletado com sucesso!`);
+                    this.listarUsuarios(); // Atualizar lista
+                    
+                } catch (error) {
+                    this.log(`❌ Erro ao deletar: ${error.message}`);
+                }
+            }
+
+            imageToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const base64 = reader.result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            previewImage(file) {
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            log(message) {
+                const logs = document.getElementById('logs');
+                const timestamp = new Date().toLocaleTimeString();
+                logs.innerHTML += `<div class="text-gray-400">[${timestamp}] ${message}</div>`;
+                logs.scrollTop = logs.scrollHeight;
+            }
+        }
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            window.userManager = new CompreFaceUserManager();
+        });
+    </script>
+</body>
+</html>

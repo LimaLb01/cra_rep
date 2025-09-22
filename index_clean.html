@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reconhecimento Facial - Conexo</title>
+    
+    <!-- Meta tags para SEO e acessibilidade -->
+    <meta name="description" content="Sistema de reconhecimento facial para controle de acesso">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Tela de Descanso -->
+    <div id="idleScreen" class="idle-screen">
+        <!-- Canvas para animação de fundo -->
+        <canvas id="vortexCanvas" class="absolute inset-0 z-0 w-full h-full bg-black"></canvas>
+        
+        <!-- Overlay com gradiente -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent z-10"></div>
+        
+        <!-- Conteúdo principal -->
+        <div class="relative z-20 text-center p-6">
+            <!-- Logo Conexo -->
+            <img src="conexo-logo.png" alt="Logo Conexo" class="logo-conexo">
+            
+            <!-- Texto principal -->
+            <h1 class="hub-text">hub de inovação da</h1>
+            
+            <!-- Logo RandonCorp -->
+            <img src="randoncorp-png.png" alt="Logo RandonCorp" class="logo-randoncorp">
+        </div>
+    </div>
+
+    <!-- Tela de Reconhecimento Facial -->
+    <div id="scannerScreen" class="scanner-screen" style="display: none;">
+        <h2 class="scanner-title">Reconhecimento Facial</h2>
+        
+        <div class="face-detection-container">
+            <!-- Contorno do rosto -->
+            <div class="face-outline"></div>
+            
+            <!-- Vídeo da câmera -->
+            <video id="faceVideo" class="face-video" autoplay muted playsinline aria-label="Câmera para reconhecimento facial"></video>
+            
+            <!-- Overlay com status -->
+            <div class="face-overlay">
+                <div class="detection-status" id="detectionStatus">
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                    <span>Detectando rosto...</span>
+                </div>
+                
+                <!-- Botão de reiniciar -->
+                <button id="restartButton" class="restart-button" aria-label="Reiniciar detecção facial">
+                    <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+                    Reiniciar Detecção
+                </button>
+            </div>
+        </div>
+        
+        <p class="scanner-help">Sistema de reconhecimento facial ativo.</p>
+    </div>
+
+    <!-- Câmera oculta para detecção de pessoas -->
+    <video id="hiddenVideo" style="display: none;" autoplay muted playsinline aria-hidden="true"></video>
+
+    <!-- Scripts de configuração -->
+    <script src="config.js"></script>
+    <script src="supabase_config.js"></script>
+    
+    <!-- Módulos do sistema -->
+    <script src="modules/PersonDetector.js"></script>
+    <script src="modules/FaceDetector.js"></script>
+    <script src="modules/SonicWaveformCanvas.js"></script>
+    
+    <!-- Script principal -->
+    <script src="main.js"></script>
+</body>
+</html>

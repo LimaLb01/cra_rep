@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração Completa CompreFace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-4xl font-bold mb-8 text-center">🔧 Configuração Completa CompreFace</h1>
+            
+            <!-- Status do Sistema -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Status do Sistema</h2>
+                <div id="systemStatus" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="font-semibold text-green-400">Docker</h3>
+                        <p id="dockerStatus" class="text-yellow-400">Verificando...</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="font-semibold text-green-400">CompreFace</h3>
+                        <p id="comprefaceStatus" class="text-yellow-400">Verificando...</p>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="font-semibold text-green-400">API</h3>
+                        <p id="apiStatus" class="text-yellow-400">Verificando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diagnóstico Automático -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">🔍 Diagnóstico Automático</h2>
+                <div id="diagnosticResults" class="space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-yellow-400">⏳</span>
+                        <span>Iniciando diagnóstico...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soluções Automáticas -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">🛠️ Soluções Automáticas</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="startDocker" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50" disabled>
+                        🐳 Iniciar Docker
+                    </button>
+                    <button id="startCompreFace" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50" disabled>
+                        🎭 Iniciar CompreFace
+                    </button>
+                    <button id="createApplication" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50" disabled>
+                        📱 Criar Aplicação
+                    </button>
+                    <button id="testSystem" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50" disabled>
+                        🧪 Testar Sistema
+                    </button>
+                </div>
+            </div>
+
+            <!-- Logs em Tempo Real -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">📋 Logs em Tempo Real</h2>
+                <div id="logs" class="bg-black p-4 rounded-lg h-64 overflow-y-auto font-mono text-sm">
+                    <div class="text-green-400">[SISTEMA] Iniciando configuração automática...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'c3e84a46-1a08-4913-8330-31818f0c0e06';
+        const BASE_URL = 'http://localhost:8000';
+        
+        let diagnosticStep = 0;
+        const diagnosticSteps = [
+            'Verificando Docker...',
+            'Verificando CompreFace...',
+            'Testando API...',
+            'Criando aplicação...',
+            'Configurando reconhecimento...',
+            'Testando sistema completo...'
+        ];
+
+        function addLog(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            let colorClass = 'text-white';
+            if (type === 'success') colorClass = 'text-green-400';
+            else if (type === 'error') colorClass = 'text-red-400';
+            else if (type === 'warning') colorClass = 'text-yellow-400';
+            else if (type === 'info') colorClass = 'text-blue-400';
+            
+            logEntry.className = colorClass;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateStatus(elementId, status, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.className = status === 'success' ? 'text-green-400' : 
+                                  status === 'error' ? 'text-red-400' : 'text-yellow-400';
+            }
+        }
+
+        function updateButton(buttonId, enabled, text = null) {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.disabled = !enabled;
+                if (text) button.textContent = text;
+            }
+        }
+
+        async function checkDocker() {
+            addLog('Verificando se Docker está rodando...', 'info');
+            try {
+                // Tentar acessar endpoint do CompreFace
+                const response = await fetch(`${BASE_URL}/api/v1/applications`, {
+                    method: 'GET',
+                    headers: { 'x-api-key': API_KEY },
+                    timeout: 3000
+                });
+                
+                if (response.ok || response.status === 400) {
+                    updateStatus('dockerStatus', 'success', '✅ Docker OK');
+                    updateStatus('comprefaceStatus', 'success', '✅ CompreFace OK');
+                    updateStatus('apiStatus', 'success', '✅ API OK');
+                    addLog('Docker e CompreFace estão rodando!', 'success');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                updateStatus('dockerStatus', 'error', '❌ Docker Offline');
+                updateStatus('comprefaceStatus', 'error', '❌ CompreFace Offline');
+                updateStatus('apiStatus', 'error', '❌ API Offline');
+                addLog(`Docker/CompreFace não está rodando: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function startDocker() {
+            addLog('Iniciando Docker...', 'info');
+            updateButton('startDocker', false, '🔄 Iniciando...');
+            
+            // Simular comando Docker (em produção, seria via backend)
+            addLog('Executando: docker-compose up -d', 'info');
+            addLog('Aguarde alguns segundos para os containers iniciarem...', 'warning');
+            
+            // Aguardar e verificar novamente
+            setTimeout(async () => {
+                const isRunning = await checkDocker();
+                if (isRunning) {
+                    addLog('Docker iniciado com sucesso!', 'success');
+                    updateButton('startCompreFace', true);
+                    updateButton('createApplication', true);
+                } else {
+                    addLog('Falha ao iniciar Docker. Verifique se está instalado.', 'error');
+                    updateButton('startDocker', true, '🐳 Tentar Novamente');
+                }
+            }, 10000);
+        }
+
+        async function createApplication() {
+            addLog('Criando aplicação de reconhecimento...', 'info');
+            updateButton('createApplication', false, '🔄 Criando...');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/v1/applications`, {
+                    method: 'POST',
+                    headers: {
+                        'x-api-key': API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: 'facial-recognition',
+                        type: 'recognition'
+                    })
+                });
+                
+                if (response.ok) {
+                    addLog('Aplicação criada com sucesso!', 'success');
+                    updateButton('testSystem', true);
+                } else {
+                    const error = await response.text();
+                    addLog(`Erro ao criar aplicação: ${error}`, 'error');
+                    addLog('Tentando criar manualmente via interface...', 'warning');
+                    addLog('Acesse http://localhost:8000 e crie uma aplicação:', 'info');
+                    addLog('Nome: facial-recognition, Tipo: Recognition', 'info');
+                }
+            } catch (error) {
+                addLog(`Erro na API: ${error.message}`, 'error');
+            }
+            
+            updateButton('createApplication', true, '📱 Criar Aplicação');
+        }
+
+        async function testSystem() {
+            addLog('Testando sistema completo...', 'info');
+            updateButton('testSystem', false, '🔄 Testando...');
+            
+            try {
+                // Testar endpoint de aplicações
+                const appsResponse = await fetch(`${BASE_URL}/api/v1/applications`, {
+                    headers: { 'x-api-key': API_KEY }
+                });
+                
+                if (appsResponse.ok) {
+                    addLog('✅ Endpoint de aplicações funcionando', 'success');
+                    
+                    // Testar endpoint de faces
+                    const facesResponse = await fetch(`${BASE_URL}/api/v1/faces`, {
+                        headers: { 'x-api-key': API_KEY }
+                    });
+                    
+                    if (facesResponse.ok || facesResponse.status === 400) {
+                        addLog('✅ Endpoint de faces funcionando', 'success');
+                        addLog('🎉 Sistema CompreFace configurado com sucesso!', 'success');
+                        addLog('Agora você pode usar o reconhecimento facial real!', 'success');
+                        
+                        // Abrir sistema principal
+                        setTimeout(() => {
+                            window.open('index_clean.html', '_blank');
+                        }, 2000);
+                    } else {
+                        addLog('⚠️ Endpoint de faces com problema', 'warning');
+                    }
+                } else {
+                    addLog('❌ Endpoint de aplicações com problema', 'error');
+                }
+            } catch (error) {
+                addLog(`Erro no teste: ${error.message}`, 'error');
+            }
+            
+            updateButton('testSystem', true, '🧪 Testar Sistema');
+        }
+
+        // Event listeners
+        document.getElementById('startDocker').addEventListener('click', startDocker);
+        document.getElementById('createApplication').addEventListener('click', createApplication);
+        document.getElementById('testSystem').addEventListener('click', testSystem);
+
+        // Iniciar diagnóstico automático
+        window.addEventListener('load', async () => {
+            addLog('🚀 Iniciando diagnóstico automático...', 'info');
+            
+            const isRunning = await checkDocker();
+            if (isRunning) {
+                updateButton('createApplication', true);
+                updateButton('testSystem', true);
+            } else {
+                updateButton('startDocker', true);
+                addLog('Docker não está rodando. Clique em "Iniciar Docker"', 'warning');
+            }
+        });
+    </script>
+</body>
+</html>

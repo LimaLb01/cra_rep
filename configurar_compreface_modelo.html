@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar CompreFace - Criar Modelo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8 text-center">Configurar CompreFace - Criar Modelo</h1>
+            
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Passo 1: Acessar CompreFace</h2>
+                <p class="mb-4">Abra o CompreFace no navegador:</p>
+                <a href="http://localhost:8000" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Abrir CompreFace
+                </a>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Passo 2: Criar Aplicação</h2>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>Clique em "Create Application"</li>
+                    <li>Nome: <code class="bg-gray-700 px-2 py-1 rounded">facial-recognition</code></li>
+                    <li>Tipo: <code class="bg-gray-700 px-2 py-1 rounded">Recognition</code></li>
+                    <li>Clique em "Create"</li>
+                </ol>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Passo 3: Obter API Key</h2>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>Após criar a aplicação, clique em "API Keys"</li>
+                    <li>Copie a API Key gerada</li>
+                    <li>Cole a API Key no campo abaixo:</li>
+                </ol>
+                
+                <div class="mt-4">
+                    <input type="text" id="apiKey" placeholder="Cole a API Key aqui" 
+                           class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                    <button onclick="testarApiKey()" class="mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                        Testar API Key
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Passo 4: Adicionar Rostos</h2>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>Clique em "Faces" na aplicação criada</li>
+                    <li>Clique em "Add Face"</li>
+                    <li>Faça upload de uma foto do rosto</li>
+                    <li>Subject ID: <code class="bg-gray-700 px-2 py-1 rounded">Usuário Teste</code></li>
+                    <li>Clique em "Add"</li>
+                </ol>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Status da Configuração</h2>
+                <div id="status" class="text-yellow-400">Aguardando configuração...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testarApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            const statusDiv = document.getElementById('status');
+            
+            if (!apiKey) {
+                statusDiv.textContent = 'Por favor, cole a API Key primeiro';
+                statusDiv.className = 'text-red-400';
+                return;
+            }
+            
+            statusDiv.textContent = 'Testando API Key...';
+            statusDiv.className = 'text-yellow-400';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/faces', {
+                    method: 'GET',
+                    headers: {
+                        'x-api-key': apiKey
+                    }
+                });
+                
+                if (response.ok || response.status === 400) {
+                    statusDiv.textContent = '✅ API Key funcionando! CompreFace configurado com sucesso.';
+                    statusDiv.className = 'text-green-400';
+                    
+                    // Atualizar o index.html com a nova API Key
+                    alert('API Key funcionando! Agora atualize o index.html com esta API Key.');
+                } else {
+                    statusDiv.textContent = '❌ Erro na API Key. Verifique se a aplicação foi criada corretamente.';
+                    statusDiv.className = 'text-red-400';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Erro ao conectar com CompreFace: ' + error.message;
+                statusDiv.className = 'text-red-400';
+            }
+        }
+    </script>
+</body>
+</html>
